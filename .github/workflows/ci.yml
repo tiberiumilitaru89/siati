@@ -1,0 +1,41 @@
+name: CI
+
+# Rulează gatekeeper-ul (TypeScript + Vitest + build Astro) la fiecare push pe main.
+# `workflow_dispatch` permite rularea manuală, pe orice branch, din tab-ul Actions.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Cele mai mici permisiuni: workflow-ul doar citește repo-ul.
+permissions:
+  contents: read
+
+# Un push nou pe același ref face rularea veche inutilă.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gatekeeper:
+    name: Gatekeeper (tsc, vitest, astro build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Acțiunile sunt fixate pe SHA-ul exact al release-ului; versiunea rămâne în comentariu.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalare dependențe
+        run: npm ci --no-audit --no-fund
+
+      - name: Gatekeeper
+        run: npm run gatekeeper

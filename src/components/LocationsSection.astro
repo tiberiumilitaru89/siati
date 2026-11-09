@@ -1,0 +1,204 @@
+---
+import { getShopStatus } from '../lib/shop-status';
+
+// Starea atelierului la momentul cererii (ora din București); în browser se actualizează la fiecare minut.
+const shopStatus = getShopStatus();
+---
+
+<!-- SECȚIUNEA 7: Locații Fizice & Program Livrări Prahova -->
+<section id="locatii" class="locations-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Prezență Fizică & Logistică</span>
+      <h2>Două Locații în Ploiești și Blejoi</h2>
+      <p>
+        Ridicare personală din florării sau livrare rapidă cu transport specializat în tot județul Prahova.
+      </p>
+    </div>
+
+    <div class="locations-grid">
+      <div class="location-card">
+        <div class="location-card__head">
+          <span class="badge-pill">Locație Principală Mall</span>
+          <span class="status-pill status-pill--open" data-shop-status data-phase={shopStatus.phase}>
+            <span data-shop-status-label>{shopStatus.label}</span>
+          </span>
+        </div>
+        <h3>Florăria Siati — Galeria Carrefour Ploiești</h3>
+        <p class="location-addr">B-dul Republicii, Galeria Comercială Carrefour Mall Ploiești</p>
+        <ul class="location-details">
+          <li><strong>Program:</strong> Luni – Duminică: 08:30 – 21:00</li>
+          <li><strong>Timp livrare:</strong> 2–3 ore de la comandă</li>
+          <li><strong>Ultima comandă azi:</strong> 18:30 pentru livrare în aceeași zi</li>
+          <li><strong>Telefon comenzi:</strong> <a href="tel:+40723852820">0723 852 820</a></li>
+        </ul>
+        <div class="location-card__actions">
+          <a
+            href="https://maps.google.com/?q=Galeria+Carrefour+Ploiesti"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-location-map"
+            aria-label="Deschide locația Carrefour Mall Ploiești în Google Maps"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>Navighează pe Hartă</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="location-card">
+        <div class="location-card__head">
+          <span class="badge-pill">Atelier Central & Școala de Flori</span>
+          <span class="status-pill status-pill--open">Atelier & Cursuri</span>
+        </div>
+        <h3>Atelierul de Creație & Școala de Flori</h3>
+        <p class="location-addr">Aleea Cirezarilor nr. 2, Ploiești • Fondator Ileana Militaru</p>
+        <ul class="location-details">
+          <li><strong>Activitate:</strong> Creație florală de elită, nunți, decor scenă & cursuri</li>
+          <li><strong>Școala de Flori:</strong> Module profesionale design floral & HoReCa (<a href="https://www.scoaladeflori.ro" target="_blank" rel="noopener noreferrer">scoaladeflori.ro</a>)</li>
+          <li><strong>Emailuri oficiale:</strong> <a href="mailto:contact@floraria-siati.ro">contact@floraria-siati.ro</a> • <a href="mailto:infosiati@gmail.com">infosiati@gmail.com</a></li>
+          <li><strong>Tradiție:</strong> Peste 20 de ani de experiență continuă în Prahova (din 2003)</li>
+        </ul>
+        <div class="location-card__actions">
+          <a
+            href="https://maps.google.com/?q=Aleea+Cirezarilor+Ploiesti"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-location-map"
+            aria-label="Deschide sediul din Aleea Cirezarilor în Google Maps"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>Vezi Locația pe Hartă</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Păstrează insignele de program corecte după încărcarea paginii (rulează o singură dată pe pagină).
+  import '../scripts/shop-status-client';
+</script>
+
+<style>
+  .locations-section {
+    position: relative;
+    z-index: 20;
+    padding: 5rem 0;
+    background: transparent;
+    border-top: none;
+  }
+
+  .locations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.75rem;
+  }
+
+  .location-card {
+    background: #ffffff;
+    padding: 2.25rem;
+    border-radius: 20px;
+    border: 1px solid rgba(197, 160, 89, 0.22);
+    box-shadow: 0 12px 32px -12px rgba(46, 34, 30, 0.06);
+  }
+
+  .location-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .status-pill--open {
+    max-width: 100%;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--success);
+    background: rgba(27, 109, 72, 0.12);
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+  }
+
+  /* Starea atelierului: textul vine din src/lib/shop-status.ts, culoarea din data-phase */
+  .status-pill--open[data-phase='evening'] {
+    color: #7a5c22;
+    background: rgba(184, 142, 68, 0.16);
+  }
+
+  .status-pill--open[data-phase='closed'] {
+    color: var(--text-muted);
+    background: rgba(97, 80, 73, 0.1);
+  }
+
+  .location-card h3 {
+    font-size: 1.48rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .location-addr {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .location-details {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    font-size: 0.92rem;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1rem;
+  }
+
+  .location-details a {
+    color: var(--eucalyptus-dark);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  .location-card__actions {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+  }
+
+  .btn-location-map {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--eucalyptus-dark);
+    background: rgba(21, 50, 38, 0.08);
+    padding: 0.6rem 1.15rem;
+    border-radius: 999px;
+    min-height: 44px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-location-map:hover {
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+  }
+
+  @media (max-width: 640px) {
+    .btn-location-map {
+      width: 100%;
+      justify-content: center;
+    }
+    .locations-grid {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .location-card {
+      padding: 1.5rem 1.15rem;
+    }
+  }
+</style>

@@ -1,0 +1,135 @@
+---
+import { formatBaniToRon, type Product } from '../lib/catalog';
+import type { WeeklyOffer } from '../lib/supabase';
+
+export interface Props {
+  weeklyOffer: WeeklyOffer | null;
+  signatureProduct: Product;
+}
+
+const { weeklyOffer, signatureProduct } = Astro.props;
+---
+
+{
+  weeklyOffer && (
+    <dialog id="weekly-offer-dialog" class="offer-dialog" aria-labelledby="weekly-offer-title">
+      <div class="offer-dialog__inner">
+        <button
+          type="button"
+          id="close-weekly-offer-btn"
+          class="offer-dialog__close"
+          aria-label="Închide fereastra Oferta Săptămânii"
+        >
+          ✕
+        </button>
+
+        <div class="offer-dialog__media">
+          <img
+            src={weeklyOffer.image_url}
+            alt={weeklyOffer.title}
+            width="600"
+            height="450"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+
+        <div class="offer-dialog__body">
+          <span class="badge-pill">Ediție Limitată Săptămânală</span>
+          <h2 id="weekly-offer-title">{weeklyOffer.title}</h2>
+          <p>{weeklyOffer.description}</p>
+          <div class="offer-dialog__price">{formatBaniToRon(weeklyOffer.price_bani)}</div>
+
+          <div class="offer-dialog__actions">
+            <button
+              type="button"
+              id="claim-weekly-offer-btn"
+              class="btn-primary select-for-checkout-btn"
+              data-id={weeklyOffer.product_id ?? signatureProduct.id}
+              data-name={weeklyOffer.title}
+              data-desc={weeklyOffer.description}
+              data-badge="Oferta Săptămânii"
+              data-price-formatted={formatBaniToRon(weeklyOffer.price_bani)}
+              data-price-bani={String(weeklyOffer.price_bani)}
+              data-image={weeklyOffer.image_url}
+            >
+              Rezervă Oferta Acum
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  )
+}
+
+<style>
+  .offer-dialog {
+    margin: auto;
+    max-width: 540px;
+    width: calc(100% - 2rem);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 0;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-soft);
+    overscroll-behavior: contain;
+  }
+
+  .offer-dialog::backdrop {
+    background: rgba(24, 34, 29, 0.62);
+    backdrop-filter: blur(4px);
+  }
+
+  .offer-dialog__inner {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .offer-dialog__close {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    font-weight: 700;
+    z-index: 10;
+  }
+
+  .offer-dialog__media img {
+    width: 100%;
+    height: 240px;
+    display: block;
+    object-fit: cover;
+  }
+
+  .offer-dialog__body {
+    padding: 1.75rem;
+  }
+
+  .offer-dialog__body h2 {
+    margin: 0.5rem 0;
+    font-size: 1.5rem;
+  }
+
+  .offer-dialog__price {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--eucalyptus-dark);
+    margin: 1rem 0;
+  }
+
+  @media (max-width: 640px) {
+    .offer-dialog {
+      width: calc(100% - 1.5rem) !important;
+      max-height: 90vh;
+      max-height: 90dvh;
+      margin: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+</style>

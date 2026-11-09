@@ -1,0 +1,28 @@
+{
+  "name": "siati",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "gatekeeper": "tsc --noEmit && vitest run && astro build"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "12.6.4",
+    "@fontsource/cormorant-garamond": "5.3.0",
+    "@fontsource/plus-jakarta-sans": "5.3.0",
+    "@supabase/supabase-js": "2.49.1",
+    "astro": "5.4.2",
+    "stripe": "17.7.0",
+    "zod": "3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.9",
+    "typescript": "5.8.2",
+    "vitest": "3.0.7"
+  }
+}

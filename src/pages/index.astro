@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import ParallaxBackground from '../components/ParallaxBackground.astro';
+import PetalsCanvas from '../components/PetalsCanvas.astro';
+import HeroSection from '../components/HeroSection.astro';
+import CatalogSection from '../components/CatalogSection.astro';
+import WeeklyOfferSection from '../components/WeeklyOfferSection.astro';
+import BudgetSection from '../components/BudgetSection.astro';
+import CheckoutSection from '../components/CheckoutSection.astro';
+import FloralSchoolSection from '../components/FloralSchoolSection.astro';
+import LocationsSection from '../components/LocationsSection.astro';
+import ReviewsSection from '../components/ReviewsSection.astro';
+import WeeklyOfferDialog from '../components/WeeklyOfferDialog.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import OrderSuccessDialog from '../components/OrderSuccessDialog.astro';
+
+import { getLiveBnrEurRate } from '../lib/bnr';
+import {
+  DEFAULT_SIGNATURE_PRODUCT,
+  type ProductCategory,
+} from '../lib/catalog';
+import { fetchActiveProducts, fetchActiveWeeklyOffer } from '../lib/supabase';
+
+export const prerender = false;
+
+// Sursele sunt independente: le rulăm în paralel (înainte se așteptau pe rând și TTFB urca până la ~2,4 s).
+const [bnrInfo, products, weeklyOffer] = await Promise.all([
+  getLiveBnrEurRate(),
+  fetchActiveProducts(),
+  fetchActiveWeeklyOffer(),
+]);
+const signatureProduct = products[0] ?? DEFAULT_SIGNATURE_PRODUCT;
+
+const categories: ReadonlyArray<{ readonly id: 'all' | ProductCategory; readonly label: string }> = [
+  { id: 'all', label: 'Toate Colecțiile' },
+  { id: 'buchete', label: 'Buchete Semnătură' },
+  { id: 'cutii', label: 'Cutii Catifea' },
+  { id: 'nunti', label: 'Nuntă & Cununie' },
+  { id: 'botez', label: 'Botez' },
+  { id: 'corporate', label: 'Corporate B2B' },
+  { id: 'funerare', label: 'Coroane Funerare' },
+];
+---
+
+<Layout
+  title="Florăria Siati Ploiești & Blejoi | Atelier Floral & Livrare Rapidă 2-3h în Prahova"
+  description="Flori proaspete hidratate zilnic în atelierele noastre din Galeria Carrefour Ploiești și Blejoi DN1A. Livrare rapidă în 2-3 ore în Prahova și poza reală pe WhatsApp înainte de livrare."
+>
+  <SiteHeader weeklyOffer={weeklyOffer} />
+  <ParallaxBackground />
+  <PetalsCanvas />
+
+  <main id="main-content">
+    <HeroSection />
+    <CatalogSection products={products} categories={categories} />
+    {weeklyOffer && <WeeklyOfferSection weeklyOffer={weeklyOffer} signatureProductId={signatureProduct.id} />}
+    <BudgetSection />
+    <CheckoutSection signatureProduct={signatureProduct} bnrRateFormatted={bnrInfo.formatted} />
+    <FloralSchoolSection />
+    <LocationsSection />
+    <ReviewsSection />
+  </main>
+
+  <WeeklyOfferDialog weeklyOffer={weeklyOffer} signatureProduct={signatureProduct} />
+  <SiteFooter />
+  <OrderSuccessDialog />
+
+  <script src="../scripts/checkout.js"></script>
+
+  <style>
+    #main-content {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</Layout>

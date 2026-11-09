@@ -1,0 +1,206 @@
+---
+import { formatBaniToRon } from '../lib/catalog';
+import type { WeeklyOffer } from '../lib/supabase';
+
+export interface Props {
+  weeklyOffer: WeeklyOffer;
+  signatureProductId?: string;
+}
+
+const { weeklyOffer, signatureProductId } = Astro.props;
+---
+
+<section id="oferta-saptamanii" class="weekly-offer-section" aria-label="Oferta Specială a Săptămânii">
+  <div class="container">
+    <div class="weekly-offer-card">
+      <div class="weekly-offer-badge">
+        <span class="pulse-dot"></span>
+        <span>OFERTA SĂPTĂMÂNII • EDIȚIE LIMITATĂ</span>
+      </div>
+
+      <div class="weekly-offer-grid">
+        <div class="weekly-offer-media">
+          <img
+            src={weeklyOffer.image_url}
+            alt={weeklyOffer.title}
+            width="600"
+            height="450"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="weekly-offer-tag">Ediție Limitată • Flori de Licitație</div>
+        </div>
+
+        <div class="weekly-offer-details">
+          <span class="eyebrow">Selecția Floristului</span>
+          <h2>{weeklyOffer.title}</h2>
+          <p class="weekly-offer-desc">{weeklyOffer.description}</p>
+
+          <div class="weekly-offer-pricing">
+            <strong class="promotional-price">{formatBaniToRon(weeklyOffer.price_bani)}</strong>
+            <span class="vat-tag">TVA inclus • Livrare Prahova</span>
+          </div>
+
+          <div class="weekly-offer-actions">
+            <button
+              type="button"
+              class="btn-primary select-for-checkout-btn"
+              data-id={weeklyOffer.product_id ?? signatureProductId}
+              data-name={weeklyOffer.title}
+              data-desc={weeklyOffer.description}
+              data-badge="Oferta Săptămânii"
+              data-price-formatted={formatBaniToRon(weeklyOffer.price_bani)}
+              data-price-bani={String(weeklyOffer.price_bani)}
+              data-image={weeklyOffer.image_url}
+            >
+              Comandă Oferta Săptămânii
+            </button>
+            <a
+              href={`https://wa.me/40723852820?text=${encodeURIComponent(`Bună ziua! Doresc să comand „${weeklyOffer.title}” din Oferta Săptămânii la prețul de ${formatBaniToRon(weeklyOffer.price_bani)}.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-secondary"
+            >
+              Rezervă pe WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .weekly-offer-section {
+    position: relative;
+    z-index: 20;
+    background: transparent;
+    padding: 5rem 0 3rem;
+  }
+
+  .weekly-offer-card {
+    background: #ffffff;
+    border: 1.5px solid rgba(197, 160, 89, 0.45);
+    border-radius: 28px;
+    box-shadow: 0 24px 60px -15px rgba(46, 34, 30, 0.08), 0 0 0 1px rgba(197, 160, 89, 0.18);
+    padding: 2.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .weekly-offer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #4ade80;
+    animation: pulse 1.6s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .weekly-offer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  .weekly-offer-media {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+  }
+
+  .weekly-offer-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .weekly-offer-card:hover .weekly-offer-media img {
+    transform: scale(1.03);
+  }
+
+  .weekly-offer-tag {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    background: rgba(30, 53, 43, 0.88);
+    color: #ffffff;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+  }
+
+  .weekly-offer-details h2 {
+    font-size: clamp(2.1rem, 3.6vw, 2.85rem);
+    font-weight: 600;
+    line-height: 1.18;
+    margin-bottom: 0.75rem;
+  }
+
+  .weekly-offer-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .weekly-offer-pricing {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    margin-bottom: 1.8rem;
+  }
+
+  .original-price {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+  }
+
+  .promotional-price {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--eucalyptus-dark);
+  }
+
+  .vat-tag {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .weekly-offer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 900px) {
+    .weekly-offer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

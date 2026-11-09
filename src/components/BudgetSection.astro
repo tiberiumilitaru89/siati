@@ -1,0 +1,114 @@
+---
+---
+
+<!-- SECȚIUNEA 5: Comandă pe Buget (WhatsApp Concierge) -->
+<section id="buget-whatsapp" class="budget-section">
+  <div class="container">
+    <div class="budget-box">
+      <div class="budget-box__copy">
+        <span class="eyebrow">Consiliere Florală Personalizată</span>
+        <h2>Spune-ne bugetul și ocazia, iar noi realizăm buchetul ideal</h2>
+        <p>
+          Alege un plafon de buget și deschide dialogul cu florăresele Siati. Îți trimitem pe loc fotografii cu florile sosite azi în atelierele din Ploiești.
+        </p>
+      </div>
+
+      <div class="budget-box__controls">
+        <div class="budget-chips" role="group" aria-label="Selectează bugetul dorit">
+          <button type="button" class="budget-chip is-selected" data-budget="150 - 250 RON">
+            150 – 250 RON (Recomandat)
+          </button>
+          <button type="button" class="budget-chip" data-budget="100 - 150 RON">
+            100 – 150 RON
+          </button>
+          <button type="button" class="budget-chip" data-budget="250 - 450 RON">
+            250 – 450 RON (Premium)
+          </button>
+          <button type="button" class="budget-chip" data-budget="Eveniment / Nuntă / Botez">
+            Eveniment / Custom
+          </button>
+        </div>
+
+        <a
+          id="whatsapp-budget-link"
+          href="https://wa.me/40723852820?text=Bun%C4%83%20ziua!%20Doresc%20recomandarea%20unui%20buchet%20%C3%AEn%20bugetul%20150%20-%20250%20RON%20cu%20livrare%20%C3%AEn%20Ploie%C8%99ti."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-rose"
+        >
+          Cere Propunere pe WhatsApp (0723 852 820)
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .budget-section {
+    position: relative;
+    z-index: 20;
+    padding: 4.5rem 0;
+    background: transparent;
+  }
+
+  .budget-box {
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 2.75rem;
+    border: 1px solid rgba(197, 160, 89, 0.25);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    box-shadow: 0 20px 50px -15px rgba(46, 34, 30, 0.06);
+  }
+
+  .budget-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .budget-chip {
+    background: var(--bg-cream);
+    border: 1.5px solid var(--border-subtle);
+    padding: 0.7rem 1.2rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .budget-chip.is-selected {
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+    border-color: var(--eucalyptus-dark);
+  }
+
+  @media (max-width: 640px) {
+    .budget-box {
+      padding: 1.5rem 1.15rem;
+    }
+
+    .budget-chips {
+      gap: 0.45rem;
+    }
+
+    .budget-chip {
+      flex: 1 1 calc(50% - 0.5rem);
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .budget-chip {
+      flex: 1 1 100%;
+    }
+  }
+</style>

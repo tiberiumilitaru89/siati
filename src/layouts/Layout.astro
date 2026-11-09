@@ -1,0 +1,451 @@
+---
+import FloatingWhatsApp from '../components/FloatingWhatsApp.astro';
+import { buildStructuredData, canonicalUrl, serializeJsonLd } from '../lib/seo';
+
+// Fonturi găzduite local (GDPR: nicio cerere către Google, deci niciun IP transmis).
+// @font-face generate cu unicode-range pentru latin + latin-ext (ă â î ș ț): vezi scripts/generate-fonts-css.mjs.
+import '../styles/fonts.css';
+
+// Fețele din primul ecran se preîncarcă (același URL cu hash ca în @font-face, deci un singur download).
+import cormorant700Latin from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-700-normal.woff2?url';
+import jakarta400Latin from '@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2?url';
+import jakarta600Latin from '@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-600-normal.woff2?url';
+
+const preloadedFonts = [cormorant700Latin, jakarta400Latin, jakarta600Latin];
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = 'Florăria Siati Ploiești & Blejoi — Buchete de flori proaspete, aranjamente nuntă, botez și coroane funerare cu livrare rapidă în 2-3 ore în Prahova și poza reală pe WhatsApp înainte de plecare.',
+} = Astro.props;
+
+// Date structurate (JSON-LD) și URL canonic: vezi src/lib/seo.ts
+const structuredData = serializeJsonLd(buildStructuredData(description));
+const canonical = canonicalUrl(Astro.url.pathname);
+---
+
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#FBF8F3" />
+
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Siati Flori" />
+
+    <!-- OpenGraph / Social & Canonical -->
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ro_RO" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="https://floraria-siati.ro/images/tulip_hero.webp" />
+
+    <!-- Fonturi locale (@fontsource): Cormorant Garamond & Plus Jakarta Sans -->
+    {
+      preloadedFonts.map((href) => (
+        <link rel="preload" as="font" type="font/woff2" href={href} crossorigin="anonymous" />
+      ))
+    }
+
+    <!-- Schema.org: Organization + 2 locații Florist -->
+    <script type="application/ld+json" set:html={structuredData} />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Sari la conținutul principal</a>
+    <slot />
+
+    <!-- Buton Plutitor WhatsApp cu Tooltip & Halo Pulsant -->
+    <FloatingWhatsApp />
+
+    <!-- Banner Consimțământ GDPR -->
+    <aside
+      id="gdpr-consent-banner"
+      class="gdpr-banner"
+      role="region"
+      aria-label="Preferințe confidențialitate și cookie-uri"
+      hidden
+    >
+      <div class="gdpr-banner__content">
+        <p class="gdpr-banner__text">
+          <strong>Confidențialitate & GDPR:</strong> Folosim exclusiv cookie-uri esențiale pentru plata
+          securizată Stripe și optimizarea experienței în Prahova. Nu vindem și nu transmitem date către terți.
+        </p>
+        <div class="gdpr-banner__actions">
+          <button type="button" id="gdpr-reject-btn" class="btn-secondary btn-sm">
+            Doar necesare
+          </button>
+          <button type="button" id="gdpr-accept-btn" class="btn-primary btn-sm">
+            Acceptă
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Service Worker Registration & GDPR Handler -->
+    <script is:inline>
+      // PWA Service Worker
+      if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.debug('SW reg failed:', err);
+          });
+        });
+      }
+
+      // GDPR banner
+      const gdprKey = 'siati_gdpr_consent';
+      const banner = document.getElementById('gdpr-consent-banner');
+      if (banner && !localStorage.getItem(gdprKey)) {
+        banner.hidden = false;
+      }
+      document.getElementById('gdpr-accept-btn')?.addEventListener('click', () => {
+        localStorage.setItem(gdprKey, 'accepted');
+        if (banner) banner.hidden = true;
+      });
+      document.getElementById('gdpr-reject-btn')?.addEventListener('click', () => {
+        localStorage.setItem(gdprKey, 'necessary_only');
+        if (banner) banner.hidden = true;
+      });
+    </script>
+
+    <style is:global>
+      /*
+       * Fonturi de rezervă cu metrici ajustate (size-adjust / ascent / descent): cât timp fontul web nu este
+       * încă încărcat, textul ocupă aproape același spațiu, deci schimbarea nu mai deplasează layout-ul (CLS).
+       * Valorile sunt calculate din metricile fonturilor (@capsizecss/metrics 4.4.0) față de
+       * Times New Roman (serif) și Arial (sans), metoda folosită și de next/font.
+       */
+      @font-face {
+        font-family: 'Cormorant Garamond Fallback';
+        src: local('Times New Roman');
+        size-adjust: 96.98%;
+        ascent-override: 95.27%;
+        descent-override: 29.59%;
+        line-gap-override: 0%;
+      }
+
+      @font-face {
+        font-family: 'Plus Jakarta Sans Fallback';
+        src: local('Arial');
+        size-adjust: 104.98%;
+        ascent-override: 98.88%;
+        descent-override: 21.15%;
+        line-gap-override: 0%;
+      }
+
+      :root {
+        --bg-cream: #fbf8f3;
+        --bg-surface: #ffffff;
+        --bg-muted: #f4ece2;
+        --eucalyptus-dark: #1b3b2b;
+        --eucalyptus-mid: #254d39;
+        --brand-red: #8e1b2d;
+        --brand-red-hover: #a8283d;
+        --dusty-rose: var(--brand-red);
+        --dusty-rose-hover: var(--brand-red-hover);
+        --gold-accent: #c5a059;
+        --gold-warm: #b88e44;
+        --gold-champagne: #d4af37;
+        --charcoal: #2e221e;
+        --text-muted: #615049;
+        --border-subtle: rgba(197, 160, 89, 0.22);
+        --border-green: rgba(27, 59, 43, 0.12);
+        --danger: #8e1b2d;
+        --success: #1b6d48;
+        --radius-sm: 8px;
+        --radius-md: 16px;
+        --radius-lg: 24px;
+        --shadow-soft: 0 18px 42px -12px rgba(46, 34, 30, 0.08);
+        --shadow-warm: 0 12px 32px -8px rgba(142, 27, 45, 0.08);
+        --font-serif: 'Cormorant Garamond', 'Cormorant Garamond Fallback', Georgia, serif;
+        --font-sans: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 76px;
+        background-color: var(--bg-cream);
+        color: var(--charcoal);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+      }
+
+      dialog {
+        overscroll-behavior: contain;
+      }
+
+      body {
+        overflow-x: hidden;
+        min-height: 100vh;
+        min-height: 100dvh;
+        background-color: transparent;
+        color: var(--charcoal);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-serif);
+        color: var(--eucalyptus-dark);
+        line-height: 1.18;
+        letter-spacing: -0.01em;
+      }
+
+      h1 em,
+      h2 em,
+      h3 em,
+      h4 em {
+        font-family: var(--font-serif);
+        font-style: italic;
+        font-weight: 600;
+        color: var(--gold-warm);
+        background: linear-gradient(135deg, #a67c33 0%, #c5a059 50%, #946924 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: inline-block;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      :focus-visible {
+        outline: 3px solid var(--dusty-rose);
+        outline-offset: 3px;
+      }
+
+      .skip-link {
+        position: absolute;
+        top: -999px;
+        left: 1rem;
+        background: var(--eucalyptus-dark);
+        color: #fff;
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-sm);
+        z-index: 9999;
+      }
+
+      .skip-link:focus {
+        top: 1rem;
+      }
+
+      /* Shared Layout Utilities */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+
+      .section-header {
+        text-align: center;
+        max-width: 720px;
+        margin: 0 auto 3.5rem;
+      }
+
+      .section-header h2 {
+        font-size: clamp(2rem, 3.5vw, 2.75rem);
+        margin-bottom: 0.85rem;
+      }
+
+      .section-header p {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        line-height: 1.6;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--dusty-rose);
+        margin-bottom: 0.65rem;
+      }
+
+      .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: rgba(142, 27, 45, 0.08);
+        color: var(--brand-red);
+        border: 1px solid rgba(142, 27, 45, 0.16);
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.3rem 0.75rem;
+        border-radius: 999px;
+        letter-spacing: 0.03em;
+      }
+
+      @media (max-width: 768px) {
+        .select-input,
+        .text-input,
+        .textarea-input,
+        input[type='text'],
+        input[type='tel'],
+        input[type='number'],
+        input[type='email'],
+        select,
+        textarea {
+          font-size: 16px !important; /* Previne auto-zoom pe iOS Safari */
+        }
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: var(--eucalyptus-dark);
+        color: #ffffff;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        font-size: 0.98rem;
+        padding: 0.9rem 1.6rem;
+        border-radius: 999px;
+        border: 1px solid var(--eucalyptus-dark);
+        cursor: pointer;
+        transition:
+          background-color 0.2s ease,
+          transform 0.15s ease;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background-color: var(--eucalyptus-mid);
+        transform: translateY(-1px);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-rose {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: var(--dusty-rose);
+        color: #ffffff;
+        font-weight: 600;
+        padding: 0.9rem 1.6rem;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.15s ease;
+      }
+
+      .btn-rose:hover {
+        background-color: var(--dusty-rose-hover);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: transparent;
+        color: var(--eucalyptus-dark);
+        font-weight: 600;
+        padding: 0.85rem 1.5rem;
+        border-radius: 999px;
+        border: 1.5px solid var(--eucalyptus-dark);
+        cursor: pointer;
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--eucalyptus-dark);
+        color: #ffffff;
+      }
+
+      .btn-sm {
+        padding: 0.55rem 1.1rem;
+        font-size: 0.85rem;
+      }
+
+      /* GDPR Banner */
+      .gdpr-banner {
+        position: fixed;
+        bottom: 5rem;
+        left: 1.25rem;
+        right: 1.25rem;
+        max-width: 720px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.97);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-soft);
+        padding: 1.1rem 1.4rem;
+        z-index: 950;
+      }
+
+      .gdpr-banner__content {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .gdpr-banner__text {
+        flex: 1 1 360px;
+        font-size: 0.86rem;
+        color: var(--charcoal);
+      }
+
+      .gdpr-banner__actions {
+        display: flex;
+        gap: 0.65rem;
+      }
+
+      .gdpr-banner__actions button {
+        min-height: 44px;
+        padding: 0.55rem 1.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </body>
+</html>

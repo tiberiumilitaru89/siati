@@ -1,0 +1,292 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+export const prerender = true;
+---
+
+<Layout
+  title="Politica de Cookie-uri & Tehnologii de Stocare | Florăria Siati"
+  description="Informații complete despre modulele cookie utilizate de Florăria Siati Ploiești. Folosim exclusiv cookie-uri esențiale pentru securitatea plății Stripe."
+>
+  <SiteHeader />
+
+  <main id="main-content" class="legal-page">
+    <div class="container legal-container">
+      <nav class="breadcrumb" aria-label="Navigare breadcrumb">
+        <a href="/">Acasă</a>
+        <span aria-hidden="true">/</span>
+        <span>Politica de Cookie-uri</span>
+      </nav>
+
+      <header class="legal-header">
+        <span class="eyebrow">Transparență Digitală & Directiva ePrivacy</span>
+        <h1>Politica de Utilizare a Cookie-urilor</h1>
+        <p class="legal-subtitle">
+          Ultima actualizare: Februarie 2026 • Fără trackere de publicitate invazivă
+        </p>
+      </header>
+
+      <article class="legal-content">
+        <section class="legal-section">
+          <h2>1. Ce sunt Cookie-urile?</h2>
+          <p>
+            Un modul cookie este un fișier text de mici dimensiuni pe care un site web îl salvează pe computerul sau dispozitivul dumneavoastră mobil atunci când vizitați site-ul. Acesta permite site-ului să rețină acțiunile și preferințele dumneavoastră (cum ar fi moneda selectată, consimțământul GDPR) pe o perioadă de timp.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2>2. Ce Tipuri de Cookie-uri Folosește Florăria Siati?</h2>
+          <p>
+            Angajamentul nostru este de a menține un site curat, rapid și respectuos cu viața privată. <strong>Nu utilizăm cookie-uri publicitare invazive și nu comercializăm istoricul dumneavoastră de navigare.</strong>
+          </p>
+          <div class="table-responsive">
+            <table class="cookies-table">
+              <thead>
+                <tr>
+                  <th>Nume Cookie / Cheie</th>
+                  <th>Tip & Furnizor</th>
+                  <th>Scopul Tehnic</th>
+                  <th>Durată Stocare</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>__stripe_mid</code>, <code>__stripe_sid</code></td>
+                  <td>Strict Necesar • Stripe Inc.</td>
+                  <td>Prevenirea fraudelor bancare și securizarea tranzacțiilor cu cardul prin Stripe.</td>
+                  <td>1 an / Sesiune</td>
+                </tr>
+                <tr>
+                  <td><code>siati_gdpr_consent</code></td>
+                  <td>Funcțional Esențial • Florăria Siati</td>
+                  <td>Memorează alegerea dumneavoastră privind politica de confidențialitate.</td>
+                  <td>1 an (LocalStorage)</td>
+                </tr>
+                <tr>
+                  <td><code>siati_wa_tooltip_dismissed</code></td>
+                  <td>Funcțional • Florăria Siati</td>
+                  <td>Previne redeschiderea repetitivă a notificării cu privire la poza pe WhatsApp.</td>
+                  <td>6 luni (LocalStorage)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2>3. Cookie-uri de Terți (Third-Party)</h2>
+          <p>
+            Singurul furnizor terț autorizat să plaseze cookie-uri tehnice este procesatorul nostru de plăți securizate <strong>Stripe Inc.</strong>, necesar pentru validarea token-urilor bancare și conformitatea cu cerințele PCI-DSS de nivel bancar.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2>4. Cum Puteți Controla și Șterge Cookie-urile?</h2>
+          <p>
+            Puteți controla sau șterge cookie-urile direct din setările browserului dumneavoastră web. Majoritatea navigatoarelor vă permit:
+          </p>
+          <ul class="legal-list">
+            <li>Să vizualizați cookie-urile existente și să le ștergeți individual.</li>
+            <li>Să blocați cookie-urile de la terți sau toate cookie-urile.</li>
+            <li>Să configurați ștergerea automată a tuturor cookie-urilor la închiderea ferestrei de navigare.</li>
+          </ul>
+          <p class="cookie-note">
+            <em>Notă: Blocarea cookie-urilor strict necesare Stripe poate împiedica finalizarea plății online cu cardul. În acest caz, puteți plasa comanda telefonic sau pe WhatsApp la <a href="tel:+40723852820">0723 852 820</a>.</em>
+          </p>
+        </section>
+
+        <section class="legal-section cookie-reset-box">
+          <h2>5. Gestionare Directă a Consimțământului pe Acest Site</h2>
+          <p>
+            Doriți să vă schimbați opțiunea inițială privind cookie-urile? Puteți reseta consimțământul printr-un simplu clic:
+          </p>
+          <button type="button" id="reset-cookie-consent-btn" class="btn-secondary">
+            <span>Resetează Consimțământul Cookie-uri</span>
+          </button>
+          <p id="reset-cookie-status" class="cookie-reset-status" hidden>
+            Preferințele au fost resetate! Pagina se reîncarcă...
+          </p>
+        </section>
+      </article>
+
+      <div class="legal-back-nav">
+        <a href="/" class="btn-primary">
+          <span>Înapoi la Magazin & Colecții</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <SiteFooter />
+</Layout>
+
+<script is:inline>
+  document.getElementById('reset-cookie-consent-btn')?.addEventListener('click', () => {
+    try {
+      localStorage.removeItem('siati_gdpr_consent');
+      localStorage.removeItem('siati_gdpr_consent_v1');
+      localStorage.removeItem('siati_wa_tooltip_dismissed');
+      const statusEl = document.getElementById('reset-cookie-status');
+      if (statusEl) statusEl.hidden = false;
+      setTimeout(() => {
+        window.location.reload();
+      }, 700);
+    } catch (e) {
+      console.debug('Reset failed', e);
+    }
+  });
+</script>
+
+<style>
+  .legal-page {
+    padding: 7rem 0 4.5rem;
+    background: var(--bg-cream);
+    min-height: 80vh;
+  }
+
+  .legal-container {
+    max-width: 900px;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb a {
+    color: var(--brand-red);
+    text-decoration: underline;
+  }
+
+  .legal-header {
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(21, 50, 38, 0.12);
+  }
+
+  .legal-header h1 {
+    font-size: clamp(2rem, 3.8vw, 3rem);
+    color: var(--eucalyptus-dark);
+    margin: 0.5rem 0 0.85rem;
+  }
+
+  .legal-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .legal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2.25rem;
+    background: #ffffff;
+    padding: 2.75rem;
+    border-radius: 24px;
+    border: 1px solid rgba(21, 50, 38, 0.08);
+    box-shadow: 0 16px 40px -12px rgba(21, 50, 38, 0.06);
+    line-height: 1.7;
+    color: var(--charcoal);
+  }
+
+  .legal-section h2 {
+    font-size: 1.45rem;
+    color: var(--eucalyptus-dark);
+    margin-bottom: 0.85rem;
+  }
+
+  .legal-section p {
+    margin-bottom: 0.85rem;
+    font-size: 0.98rem;
+    color: #2d3832;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    margin: 1.25rem 0;
+  }
+
+  .cookies-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+
+  .cookies-table th,
+  .cookies-table td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(21, 50, 38, 0.1);
+  }
+
+  .cookies-table th {
+    background: var(--bg-cream);
+    color: var(--eucalyptus-dark);
+    font-weight: 700;
+  }
+
+  .cookies-table code {
+    background: rgba(21, 50, 38, 0.08);
+    color: var(--brand-red);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+
+  .legal-list {
+    margin: 0.75rem 0 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cookie-note {
+    background: rgba(201, 166, 107, 0.12);
+    border-left: 3px solid var(--gold-accent);
+    padding: 0.85rem 1.15rem;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.9rem;
+  }
+
+  .cookie-note a {
+    color: var(--eucalyptus-dark);
+    font-weight: 700;
+    text-decoration: underline;
+  }
+
+  .cookie-reset-box {
+    padding: 1.5rem;
+    background: var(--bg-cream);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(21, 50, 38, 0.1);
+  }
+
+  .cookie-reset-status {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: 0.75rem !important;
+  }
+
+  .legal-back-nav {
+    margin-top: 3rem;
+    text-align: center;
+  }
+
+  @media (max-width: 640px) {
+    .legal-page {
+      padding: 5.5rem 0 3rem;
+    }
+
+    .legal-content {
+      padding: 1.5rem 1.15rem;
+      border-radius: 16px;
+    }
+  }
+</style>

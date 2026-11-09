@@ -1,0 +1,1401 @@
+---
+import Layout from '../layouts/Layout.astro';
+import {
+  ADMIN_COOKIE_NAME,
+  extractCookieValue,
+  getAdminSecurityConfig,
+  PRODUCT_CATEGORIES,
+  verifyAdminSessionToken,
+} from '../lib/admin-domain';
+import { formatBaniToRon, type ProductCategory } from '../lib/catalog';
+import {
+  aggregateOrdersReport,
+  computeClosedMonthWindow,
+} from '../lib/reporting-domain';
+import {
+  fetchAllProductsForAdmin,
+  fetchOrdersBetweenDates,
+  fetchWeeklyOfferForAdmin,
+} from '../lib/supabase';
+
+export const prerender = false;
+
+// Fail-closed: fără parolă/secret valide pe server, panoul rămâne mereu pe ecranul de autentificare.
+const adminConfig = getAdminSecurityConfig();
+const sessionToken = extractCookieValue(Astro.request.headers.get('cookie'), ADMIN_COOKIE_NAME);
+const isAuthenticated =
+  adminConfig.ok && verifyAdminSessionToken(sessionToken, adminConfig.config.hmacSecret);
+
+const products = isAuthenticated ? await fetchAllProductsForAdmin() : [];
+const weeklyOffer = isAuthenticated ? await fetchWeeklyOfferForAdmin() : null;
+
+const now = new Date();
+const sevenDaysAgoIso = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+const closedMonthWindow = computeClosedMonthWindow(now);
+
+const weeklyOrders = isAuthenticated
+  ? await fetchOrdersBetweenDates(sevenDaysAgoIso, now.toISOString())
+  : [];
+const closedMonthOrders = isAuthenticated
+  ? await fetchOrdersBetweenDates(closedMonthWindow.startIso, closedMonthWindow.endIso)
+  : [];
+
+const weeklyReport = aggregateOrdersReport(weeklyOrders, 'Ultimele 7 Zile');
+const closedMonthReport = aggregateOrdersReport(
+  closedMonthOrders,
+  `Luna Încheiată (${closedMonthWindow.monthLabelRo})`
+);
+
+const categoryLabels: Record<ProductCategory, string> = {
+  buchete: 'Buchete Semnătură',
+  cutii: 'Cutii Catifea',
+  nunti: 'Nuntă & Cununie',
+  botez: 'Botez',
+  corporate: 'Corporate B2B',
+  funerare: 'Coroane Funerare',
+  ghiveci: 'Plante la Ghiveci',
+};
+---
+
+<Layout
+  title="Panou Administrare | Florăria Siati Ploiești & Blejoi"
+  description="Panou securizat de administrare pentru actualizarea Ofertei Săptămânii, a prețurilor, fotografiilor și stocurilor Florăria Siati."
+>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <div class="admin-container admin-header__inner">
+        <div class="admin-brand">
+          <a href="/" class="admin-brand__logo">SIATI</a>
+          <span class="admin-brand__badge">Panou Administrare Site</span>
+        </div>
+
+        <div class="admin-header__actions">
+          <a href="/" class="btn-secondary btn-sm">👁️ Vezi Site-ul Live</a>
+          {
+            isAuthenticated && (
+              <button type="button" id="admin-logout-btn" class="btn-danger-outline btn-sm">
+                🔒 Ieșire (Logout)
+              </button>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    <main id="main-content" class="admin-main admin-container">
+      {
+        !isAuthenticated ? (
+          <section class="login-section" aria-labelledby="admin-login-title">
+            <div class="login-card">
+              <span class="badge-pill">Acces Protejat cu Parolă</span>
+              <h1 id="admin-login-title">Administrare Florăria Siati</h1>
+              <p class="login-desc">
+                Introdu parola stabilită pentru a modifica <strong>Oferta Săptămânii</strong>, fotografiile și prețurile din toate rubricile site-ului.
+              </p>
+
+              <form id="admin-login-form" class="login-form" novalidate>
+                <div class="form-field">
+                  <label for="admin-password">Parola de Administrare:</label>
+                  <input
+                    type="password"
+                    id="admin-password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="Introdu parola..."
+                    class="text-input"
+                  />
+                </div>
+
+                <div
+                  id="admin-login-feedback"
+                  class="admin-feedback"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                />
+
+                <button type="submit" id="admin-login-submit" class="btn-primary login-submit-btn">
+                  Intră în Panoul de Administrare
+                </button>
+              </form>
+            </div>
+          </section>
+        ) : (
+          <div class="dashboard-content">
+            <!-- BANDA STATUS GLOBAL -->
+            <div class="dashboard-banner">
+              <div>
+                <h1>Gestiune Live Catalog & Oferta Săptămânii</h1>
+                <p>
+                  Orice modificare salvată aici se actualizează instantaneu pe site-ul public și în calculatorul de plăți Stripe (RON & EUR).
+                </p>
+              </div>
+              <div class="dashboard-stats">
+                <span class="stat-chip">
+                  🌷 <strong>{products.length}</strong> Produse în Catalog
+                </span>
+                <span class="stat-chip">
+                  🌟 Oferta Săptămânii:{' '}
+                  <strong>{weeklyOffer?.is_active ? 'ACTIVĂ' : 'OPRITĂ'}</strong>
+                </span>
+              </div>
+            </div>
+
+            <!-- SECȚIUNEA 1: EDITOR LIVE „OFERTA SĂPTĂMÂNII” -->
+            {weeklyOffer && (
+              <section class="admin-panel-section" aria-labelledby="weekly-offer-editor-heading">
+                <div class="section-title-bar">
+                  <div>
+                    <span class="eyebrow">Rubrică Animată pe Pagina Principală</span>
+                    <h2 id="weekly-offer-editor-heading">1. Configurare „Oferta Săptămânii”</h2>
+                  </div>
+                  <span class="status-pill" data-active={weeklyOffer.is_active ? 'true' : 'false'}>
+                    {weeklyOffer.is_active ? '● Afișată pe Site' : '○ Ascunsă Temporar'}
+                  </span>
+                </div>
+
+                <form id="weekly-offer-form" class="offer-editor-grid">
+                  <div class="offer-editor__media">
+                    <div class="image-preview-box">
+                      <img
+                        id="weekly-offer-preview-img"
+                        src={weeklyOffer.image_url}
+                        alt={weeklyOffer.title}
+                        width="600"
+                        height="450"
+                      />
+                    </div>
+
+                    <div class="upload-controls">
+                      <label class="upload-btn-label" for="weekly-offer-file-input">
+                        📸 Încarcă Poză din Telefon / PC (WebP Automat)
+                      </label>
+                      <input
+                        type="file"
+                        id="weekly-offer-file-input"
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        hidden
+                      />
+                      <span id="weekly-offer-upload-status" class="upload-status-text" />
+                    </div>
+                  </div>
+
+                  <div class="offer-editor__fields">
+                    <div class="form-row-two">
+                      <div class="form-field">
+                        <label for="wo-title">Titlu Oferta Săptămânii:</label>
+                        <input
+                          type="text"
+                          id="wo-title"
+                          class="text-input"
+                          value={weeklyOffer.title}
+                          required
+                        />
+                      </div>
+
+                      <div class="form-field">
+                        <label for="wo-price-ron">Preț Promoțional (în RON):</label>
+                        <input
+                          type="number"
+                          id="wo-price-ron"
+                          class="text-input"
+                          step="0.01"
+                          min="1"
+                          value={(weeklyOffer.price_bani / 100).toFixed(0)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="wo-desc">Descriere Ofertă (afișată în secțiunea animată):</label>
+                      <textarea id="wo-desc" class="textarea-input" rows="3" required>{weeklyOffer.description}</textarea>
+                    </div>
+
+                    <div class="form-field">
+                      <label for="wo-image-url">Adresă Fotografie (se completează automat la upload):</label>
+                      <input
+                        type="text"
+                        id="wo-image-url"
+                        class="text-input"
+                        value={weeklyOffer.image_url}
+                        required
+                      />
+                    </div>
+
+                    <label class="toggle-row" for="wo-is-active">
+                      <input type="checkbox" id="wo-is-active" checked={weeklyOffer.is_active} />
+                      <span>
+                        <strong>Activează secțiunea „Oferta Săptămânii” pe site</strong> (clienții o pot comanda direct cu cardul)
+                      </span>
+                    </label>
+
+                    <div
+                      id="weekly-offer-feedback"
+                      class="admin-feedback"
+                      role="status"
+                      aria-live="polite"
+                      hidden
+                    />
+
+                    <button type="submit" id="weekly-offer-save-btn" class="btn-primary">
+                      💾 Salvează Oferta Săptămânii pe Site
+                    </button>
+                  </div>
+                </form>
+              </section>
+            )}
+
+            <!-- SECȚIUNEA 2: ADAUGĂ ARANJAMENT NOU ÎN CATALOG -->
+            <section class="admin-panel-section" aria-labelledby="add-product-heading">
+              <div class="section-title-bar">
+                <div>
+                  <span class="eyebrow">Extindere Colecții</span>
+                  <h2 id="add-product-heading">2. Adaugă Aranjament Floral Nou</h2>
+                </div>
+              </div>
+
+              <form id="create-product-form" class="create-product-grid">
+                <div class="form-row-three">
+                  <div class="form-field">
+                    <label for="new-prod-name">Denumire Aranjament / Buchet:</label>
+                    <input
+                      type="text"
+                      id="new-prod-name"
+                      class="text-input"
+                      placeholder="Ex: Buchet Bujori Imperiali"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label for="new-prod-category">Rubrica din Site (Categorie):</label>
+                    <select id="new-prod-category" class="select-input">
+                      {PRODUCT_CATEGORIES.map((cat) => (
+                        <option value={cat}>{categoryLabels[cat]}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="new-prod-price">Preț (RON):</label>
+                    <input
+                      type="number"
+                      id="new-prod-price"
+                      class="text-input"
+                      step="0.01"
+                      min="1"
+                      placeholder="Ex: 240"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row-two">
+                  <div class="form-field">
+                    <label for="new-prod-badge">Etichetă / Badge (Opțional):</label>
+                    <input
+                      type="text"
+                      id="new-prod-badge"
+                      class="text-input"
+                      placeholder="Ex: Ediție de Sezon"
+                    />
+                  </div>
+
+                  <div class="form-field">
+                    <label for="new-prod-image">Fotografie (URL sau încarcă direct mai jos):</label>
+                    <div class="inline-upload-group">
+                      <input
+                        type="text"
+                        id="new-prod-image"
+                        class="text-input"
+                        placeholder="/uploads/... sau https://..."
+                        required
+                      />
+                      <label class="upload-btn-inline" for="new-prod-file-input">
+                        📸 Upload Poză
+                      </label>
+                      <input
+                        type="file"
+                        id="new-prod-file-input"
+                        accept="image/jpeg,image/png,image/webp,image/avif"
+                        hidden
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="new-prod-desc">Descriere Aranjament:</label>
+                  <textarea
+                    id="new-prod-desc"
+                    class="textarea-input"
+                    rows="2"
+                    placeholder="Descrie florile folosite, ambalajul și parfumul..."
+                    required
+                  />
+                </div>
+
+                <div
+                  id="create-product-feedback"
+                  class="admin-feedback"
+                  role="status"
+                  aria-live="polite"
+                  hidden
+                />
+
+                <button type="submit" id="create-product-btn" class="btn-primary">
+                  ➕ Adaugă Produsul în Site
+                </button>
+              </form>
+            </section>
+
+            <!-- SECȚIUNEA 3: MODIFICĂ PREȚURI, POZE ȘI STOCURI ÎN TOATE RUBRICILE -->
+            <section class="admin-panel-section" aria-labelledby="catalog-editor-heading">
+              <div class="section-title-bar">
+                <div>
+                  <span class="eyebrow">Control Total Prețuri & Fotografii</span>
+                  <h2 id="catalog-editor-heading">
+                    3. Modifică Produsele din Toate Rubricile Site-ului
+                  </h2>
+                </div>
+
+                <div class="admin-filter-tabs" role="tablist" aria-label="Filtrează după rubrică">
+                  <button
+                    type="button"
+                    class="admin-filter-btn is-active"
+                    data-filter="all"
+                  >
+                    Toate ({products.length})
+                  </button>
+                  {PRODUCT_CATEGORIES.map((cat) => (
+                    <button type="button" class="admin-filter-btn" data-filter={cat}>
+                      {categoryLabels[cat]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div class="admin-products-grid" id="admin-products-grid">
+                {products.map((product) => (
+                  <article
+                    class="admin-product-card"
+                    data-product-id={product.id}
+                    data-category={product.category}
+                  >
+                    <div class="admin-product-card__media">
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        class="prod-preview-img"
+                        width="400"
+                        height="300"
+                        loading="lazy"
+                      />
+                      <label class="upload-overlay-btn">
+                        📸 Schimbă Poza
+                        <input
+                          type="file"
+                          class="prod-file-input"
+                          accept="image/jpeg,image/png,image/webp,image/avif"
+                          hidden
+                        />
+                      </label>
+                    </div>
+
+                    <div class="admin-product-card__body">
+                      <div class="form-field">
+                        <label>Denumire:</label>
+                        <input
+                          type="text"
+                          class="text-input prod-name-input"
+                          value={product.name}
+                        />
+                      </div>
+
+                      <div class="form-row-two">
+                        <div class="form-field">
+                          <label>Preț (RON):</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            class="text-input prod-price-input"
+                            value={(product.price_bani / 100).toFixed(0)}
+                          />
+                        </div>
+
+                        <div class="form-field">
+                          <label>Rubrică:</label>
+                          <select class="select-input prod-category-input">
+                            {PRODUCT_CATEGORIES.map((cat) => (
+                              <option value={cat} selected={cat === product.category}>
+                                {categoryLabels[cat]}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="form-row-two">
+                        <div class="form-field">
+                          <label>Badge / Etichetă:</label>
+                          <input
+                            type="text"
+                            class="text-input prod-badge-input"
+                            value={product.badge ?? ''}
+                            placeholder="Ex: Cel mai comandat"
+                          />
+                        </div>
+
+                        <div class="form-field">
+                          <label>URL Imagine:</label>
+                          <input
+                            type="text"
+                            class="text-input prod-image-input"
+                            value={product.image_url}
+                          />
+                        </div>
+                      </div>
+
+                      <div class="form-field">
+                        <label>Descriere:</label>
+                        <textarea class="textarea-input prod-desc-input" rows="2">{product.description}</textarea>
+                      </div>
+
+                      <label class="toggle-row">
+                        <input
+                          type="checkbox"
+                          class="prod-stock-input"
+                          checked={product.in_stock}
+                        />
+                        <span>
+                          Produs disponibil în stoc ({formatBaniToRon(product.price_bani)})
+                        </span>
+                      </label>
+
+                      <div class="prod-card-feedback admin-feedback" hidden />
+
+                      <div class="prod-card-actions">
+                        <button type="button" class="btn-primary btn-sm save-product-btn">
+                          💾 Salvează Modificarea
+                        </button>
+                        <button type="button" class="btn-danger-outline btn-sm delete-product-btn">
+                          🗑️ Șterge
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <!-- SECȚIUNEA 4: FACTURARE AUTOMATĂ SPV, RAPORT SĂPTĂMÂNAL & ÎNCHIDERE LUNARĂ (PE DATA DE 1) -->
+            <section class="admin-panel-section" aria-labelledby="reports-spv-heading">
+              <div class="section-title-bar">
+                <div>
+                  <span class="eyebrow">SmartBill ANAF RO e-Factura (SPV) & Contabilitate Automată</span>
+                  <h2 id="reports-spv-heading">
+                    4. Sistem Facturare SPV, Raport Săptămânal & Închidere Lunară (Data de 1)
+                  </h2>
+                </div>
+                <span class="status-pill" data-active="true">
+                  ● Cron Activ: Duminică 21:00 & Data de 1 la 08:00
+                </span>
+              </div>
+
+              <div class="reports-grid">
+                <!-- Card Raport Săptămânal -->
+                <div class="report-card">
+                  <div class="report-card__header">
+                    <span class="eyebrow">Automat în Fiecare Duminică (21:00)</span>
+                    <h3>📊 Raport Săptămânal Comenzi</h3>
+                    <p>
+                      Sinteză cu toate comenzile online, zonele de livrare din Prahova și opțiunile Express / VIP din ultimele 7 zile.
+                    </p>
+                  </div>
+
+                  <div class="report-metrics">
+                    <div class="metric-item">
+                      <span>Comenzi (7 zile)</span>
+                      <strong>{weeklyReport.totalOrdersCount}</strong>
+                    </div>
+                    <div class="metric-item">
+                      <span>Facturi SPV</span>
+                      <strong>{weeklyReport.invoicedSpvCount}</strong>
+                    </div>
+                    <div class="metric-item">
+                      <span>Total Încasat</span>
+                      <strong>{weeklyReport.totalRevenueRonFormatted}</strong>
+                    </div>
+                  </div>
+
+                  <div class="report-actions">
+                    <a
+                      href="/api/cron/weekly-digest?format=csv"
+                      class="btn-secondary btn-sm"
+                      download
+                    >
+                      📥 Descarcă CSV Săptămânal
+                    </a>
+                    <button
+                      type="button"
+                      id="trigger-weekly-report-btn"
+                      class="btn-primary btn-sm"
+                    >
+                      📧 Trimite Acum pe contact@floraria-siati.ro
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Card Raport Lunar Închidere (Data de 1) -->
+                <div class="report-card">
+                  <div class="report-card__header">
+                    <span class="eyebrow">Automat pe Data de 1 a Lunii (08:00)</span>
+                    <h3>🧾 Închidere Lunară Facturi SPV & Comenzi ({closedMonthWindow.monthLabelRo})</h3>
+                    <p>
+                      Imediat ce se încheie luna, pe data de 1 se generează borderoul complet de facturi SPV + TVA 19% + CSV pentru contabilitate.
+                    </p>
+                  </div>
+
+                  <div class="report-metrics">
+                    <div class="metric-item">
+                      <span>Comenzi Lună Închisă</span>
+                      <strong>{closedMonthReport.totalOrdersCount}</strong>
+                    </div>
+                    <div class="metric-item">
+                      <span>TVA Colectat (19%)</span>
+                      <strong>{closedMonthReport.estimatedVat19RonFormatted}</strong>
+                    </div>
+                    <div class="metric-item">
+                      <span>Total Facturat SPV</span>
+                      <strong>{closedMonthReport.totalRevenueRonFormatted}</strong>
+                    </div>
+                  </div>
+
+                  <div class="report-actions">
+                    <a
+                      href="/api/cron/monthly-closing?format=csv"
+                      class="btn-secondary btn-sm"
+                      download
+                    >
+                      📥 Descarcă CSV Contabil ({closedMonthWindow.monthLabelRo})
+                    </a>
+                    <a
+                      href="/api/cron/monthly-closing?scope=current_month&format=csv"
+                      class="btn-secondary btn-sm"
+                      download
+                    >
+                      📥 CSV Luna în Curs
+                    </a>
+                    <button
+                      type="button"
+                      id="trigger-monthly-report-btn"
+                      class="btn-primary btn-sm"
+                    >
+                      📧 Trimite Raportul Lunar pe Email
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                id="reports-dispatch-feedback"
+                class="admin-feedback"
+                role="status"
+                aria-live="polite"
+                hidden
+              />
+            </section>
+
+            <!-- SECȚIUNEA 5: COMENZI RECENTE, FELICITĂRI SCRISE DE MÂNĂ & LIVRARE CADOURI -->
+            <section class="admin-panel-section" aria-labelledby="orders-list-heading">
+              <div class="section-title-bar">
+                <div>
+                  <span class="eyebrow">Operativ & Pregătire Flori</span>
+                  <h2 id="orders-list-heading">5. Comenzi Recente, Felicitări Cadou & Destinatari</h2>
+                </div>
+                <span class="status-pill" data-active={weeklyOrders.length > 0 ? 'true' : 'false'}>
+                  {weeklyOrders.length} {weeklyOrders.length === 1 ? 'comandă în ultimele 7 zile' : 'comenzi în ultimele 7 zile'}
+                </span>
+              </div>
+
+              {weeklyOrders.length === 0 ? (
+                <div class="orders-empty-state">
+                  <div class="empty-icon" aria-hidden="true">💌</div>
+                  <h3>Nicio comandă înregistrată în ultimele 7 zile</h3>
+                  <p>
+                    Comenzile confirmate și plătite cu cardul prin Stripe vor apărea automat aici în timp real,
+                    cu textul felicitării de copiat pe cartonaș și datele de livrare către destinatar.
+                  </p>
+                </div>
+              ) : (
+                <div class="orders-table-wrapper">
+                  <table class="admin-orders-table">
+                    <thead>
+                      <tr>
+                        <th>Data & Ora</th>
+                        <th>Client & Destinatar</th>
+                        <th>Aranjament Floral</th>
+                        <th>Zonă & Interval</th>
+                        <th>💌 Felicitare Cadou</th>
+                        <th>Total & SPV</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {weeklyOrders.map((ord) => (
+                        <tr>
+                          <td class="order-cell-date">
+                            <strong>{new Date(ord.created_at).toLocaleDateString('ro-RO')}</strong>
+                            <small>{new Date(ord.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}</small>
+                          </td>
+                          <td class="order-cell-customer">
+                            <div class="customer-name">
+                              <strong>{ord.customer_name}</strong>
+                              <div>
+                                <a href={`tel:${ord.customer_phone}`} class="tel-link">{ord.customer_phone}</a>
+                              </div>
+                            </div>
+                            {ord.recipient_name && ord.recipient_name !== ord.customer_name && (
+                              <div class="recipient-tag">
+                                <span>🎁 Destinatar: <strong>{ord.recipient_name}</strong></span>
+                                {ord.recipient_phone && (
+                                  <div>
+                                    <a href={`tel:${ord.recipient_phone}`} class="tel-link">{ord.recipient_phone}</a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {ord.is_anonymous_gift && (
+                              <div>
+                                <span class="badge-anonymous">🕵️ Livrare Anonimă (Cadou Secret)</span>
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <strong>{ord.product_name}</strong>
+                            {ord.require_whatsapp_photo && (
+                              <div>
+                                <span class="photo-req-badge">📸 Cere Poză WhatsApp</span>
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <div class="delivery-badge">{ord.delivery_zone}</div>
+                            <small class="slot-badge">{ord.delivery_slot}</small>
+                            {ord.express_immediate && <div><span class="badge-express">⚡ Express</span></div>}
+                            {ord.after_hours_vip && <div><span class="badge-vip">🌙 VIP</span></div>}
+                          </td>
+                          <td class="order-cell-greeting">
+                            {ord.greeting_message ? (
+                              <div class="greeting-box">
+                                <p class="greeting-text">„{ord.greeting_message}”</p>
+                                <button
+                                  type="button"
+                                  class="copy-greeting-btn"
+                                  data-greeting={ord.greeting_message}
+                                  title="Copiază textul felicitării"
+                                >
+                                  📋 Copiază
+                                </button>
+                              </div>
+                            ) : (
+                              <span class="no-greeting">Fără felicitare</span>
+                            )}
+                          </td>
+                          <td class="order-cell-amount">
+                            <strong>{formatBaniToRon(ord.amount_bani)}</strong>
+                            <span class={`spv-pill ${ord.status === 'invoiced_spv' ? 'spv-done' : 'spv-pending'}`}>
+                              {ord.status === 'invoiced_spv' ? `SPV: ${ord.smartbill_series ?? ''} ${ord.smartbill_number ?? ''}` : 'Plătit'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          </div>
+        )
+      }
+    </main>
+  </div>
+
+  <script src="../scripts/admin.js"></script>
+
+  <style>
+    .admin-shell {
+      min-height: 100vh;
+      background: var(--bg-cream);
+      padding-bottom: 5rem;
+    }
+
+    .admin-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .admin-header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .admin-header__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 70px;
+      gap: 1rem;
+    }
+
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .admin-brand__logo {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--eucalyptus-dark);
+    }
+
+    .admin-brand__badge {
+      background: rgba(31, 61, 48, 0.1);
+      color: var(--eucalyptus-dark);
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+    }
+
+    .admin-header__actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .btn-danger-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(158, 42, 43, 0.35);
+      background: #ffffff;
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-danger-outline:hover {
+      background: rgba(158, 42, 43, 0.08);
+    }
+
+    .admin-main {
+      padding-top: 2.5rem;
+    }
+
+    /* Login Card */
+    .login-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 70vh;
+    }
+
+    .login-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      padding: 2.75rem 2.25rem;
+      max-width: 460px;
+      width: 100%;
+    }
+
+    .login-card h1 {
+      font-size: 1.9rem;
+      margin: 0.6rem 0;
+    }
+
+    .login-desc {
+      color: var(--text-muted);
+      font-size: 0.94rem;
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+    }
+
+    .login-submit-btn {
+      width: 100%;
+    }
+
+    /* Dashboard */
+    .dashboard-banner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      background: linear-gradient(135deg, #1b3429 0%, #244335 100%);
+      color: #ffffff;
+      padding: 2rem 2.25rem;
+      border-radius: var(--radius-lg);
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-banner h1 {
+      color: #ffffff;
+      font-size: 1.85rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .dashboard-banner p {
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 0.94rem;
+    }
+
+    .dashboard-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .stat-chip {
+      background: rgba(255, 255, 255, 0.14);
+      padding: 0.5rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+    }
+
+    .admin-panel-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      padding: 2rem;
+      margin-bottom: 2.25rem;
+    }
+
+    .section-title-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .section-title-bar h2 {
+      font-size: 1.5rem;
+    }
+
+    .status-pill {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(27, 109, 72, 0.12);
+      color: var(--success);
+    }
+
+    /* Weekly Offer Editor */
+    .offer-editor-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.75rem;
+      align-items: start;
+    }
+
+    .image-preview-box {
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-cream);
+      aspect-ratio: 4 / 3;
+    }
+
+    .image-preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .upload-controls {
+      margin-top: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .upload-btn-label,
+    .upload-btn-inline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.65rem 1rem;
+      background: var(--eucalyptus-dark);
+      color: #ffffff;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .upload-status-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .offer-editor__fields,
+    .create-product-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-row-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.9rem;
+    }
+
+    .form-row-three {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 0.8fr;
+      gap: 0.9rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-field label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .text-input,
+    .textarea-input,
+    .select-input {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-cream);
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--charcoal);
+    }
+
+    .inline-upload-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.75rem 0.95rem;
+      background: var(--bg-cream);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    .toggle-row input[type='checkbox'] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--eucalyptus-dark);
+    }
+
+    .admin-feedback {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.86rem;
+      font-weight: 600;
+    }
+
+    .admin-feedback[data-state='success'] {
+      background: rgba(27, 109, 72, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(27, 109, 72, 0.3);
+    }
+
+    .admin-feedback[data-state='error'] {
+      background: rgba(158, 42, 43, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(158, 42, 43, 0.3);
+    }
+
+    /* Filter Tabs */
+    .admin-filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .admin-filter-btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-cream);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .admin-filter-btn.is-active {
+      background: var(--eucalyptus-dark);
+      color: #ffffff;
+      border-color: var(--eucalyptus-dark);
+    }
+
+    /* Products Grid */
+    .admin-products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .admin-product-card {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .admin-product-card__media {
+      position: relative;
+      height: 210px;
+      background: var(--bg-cream);
+    }
+
+    .admin-product-card__media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .upload-overlay-btn {
+      position: absolute;
+      bottom: 0.65rem;
+      right: 0.65rem;
+      background: rgba(27, 52, 41, 0.92);
+      color: #ffffff;
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .admin-product-card__body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .prod-card-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+    }
+
+    /* Reports & SPV Section */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .report-card {
+      background: var(--bg-cream);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+
+    .report-card__header h3 {
+      font-size: 1.25rem;
+      margin: 0.35rem 0 0.5rem;
+    }
+
+    .report-card__header p {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .report-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      background: #ffffff;
+      padding: 0.95rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .metric-item span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .metric-item strong {
+      font-size: 1.05rem;
+      color: var(--eucalyptus-dark);
+    }
+
+    .report-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    /* SECȚIUNEA 5: COMENZI & FELICITĂRI */
+    .orders-empty-state {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border-subtle);
+    }
+
+    .orders-empty-state .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .orders-empty-state h3 {
+      font-size: 1.15rem;
+      color: var(--eucalyptus-dark);
+      margin-bottom: 0.4rem;
+    }
+
+    .orders-empty-state p {
+      max-width: 520px;
+      margin: 0 auto;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .orders-table-wrapper {
+      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      overflow-x: auto;
+    }
+
+    .admin-orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      text-align: left;
+    }
+
+    .admin-orders-table th {
+      background: rgba(31, 61, 48, 0.04);
+      padding: 0.85rem 1rem;
+      font-weight: 700;
+      color: var(--eucalyptus-dark);
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    .admin-orders-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: top;
+    }
+
+    .admin-orders-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .order-cell-date {
+      white-space: nowrap;
+    }
+
+    .order-cell-customer .tel-link {
+      display: inline-block;
+      color: var(--eucalyptus-dark);
+      font-weight: 600;
+      text-decoration: underline;
+      margin-top: 0.15rem;
+    }
+
+    .recipient-tag {
+      margin-top: 0.45rem;
+      padding: 0.35rem 0.55rem;
+      background: rgba(200, 169, 126, 0.15);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+    }
+
+    .badge-anonymous {
+      display: inline-block;
+      margin-top: 0.35rem;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #991b1b;
+      background: #fee2e2;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .photo-req-badge {
+      display: inline-block;
+      margin-top: 0.3rem;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #065f46;
+      background: #d1fae5;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+
+    .greeting-box {
+      background: #faf7f2;
+      border: 1px solid rgba(200, 169, 126, 0.4);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.75rem;
+      position: relative;
+      min-width: 180px;
+      max-width: 260px;
+    }
+
+    .greeting-text {
+      font-family: var(--font-serif);
+      font-style: italic;
+      color: #2c2a29;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      margin-bottom: 0.5rem;
+      white-space: pre-wrap;
+    }
+
+    .copy-greeting-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--charcoal);
+      transition: background 0.15s ease;
+    }
+
+    .copy-greeting-btn:hover {
+      background: var(--bg-cream);
+    }
+
+    .no-greeting {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.82rem;
+    }
+
+    .order-cell-amount {
+      white-space: nowrap;
+    }
+
+    .spv-pill {
+      display: inline-block;
+      margin-top: 0.3rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .spv-done {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .spv-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    @media (max-width: 860px) {
+      .offer-editor-grid,
+      .form-row-two,
+      .form-row-three,
+      .reports-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-header__inner {
+        flex-wrap: wrap;
+        padding: 0.75rem 0;
+        min-height: auto;
+      }
+
+      .dashboard-banner {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .dashboard-stats {
+        flex-wrap: wrap;
+      }
+
+      .report-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .text-input,
+      .select-input,
+      .textarea-input,
+      input,
+      select,
+      textarea {
+        font-size: 16px !important; /* Previne auto-zoom pe iOS */
+      }
+    }
+  </style>
+</Layout>

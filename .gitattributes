@@ -1,0 +1,13 @@
+# Sfârșiturile de linie sunt normalizate la LF în repository și în directorul de lucru.
+# Fără acest fișier, git pe Windows cu core.autocrlf=true scrie CRLF în orice clonă proaspătă
+# (inclusiv în public/_headers, citit de Cloudflare Pages) și testul de sincronizare a antetelor pică.
+* text=auto eol=lf
+
+# Fișiere binare: fără conversii
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.woff2 binary
+*.ico binary

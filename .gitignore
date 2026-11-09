@@ -1,0 +1,28 @@
+# Build and dependencies
+node_modules/
+dist/
+.astro/
+.wrangler/
+
+# Environment secrets
+.env
+.env.production
+.env.local
+*.env
+.dev.vars
+
+# Local state fallbacks
+data/
+
+# Internal agent and architecture documentation (kept in SecondBrain, not on public GitHub)
+.knowledge/
+.gemini/
+.antigravity/
+.system_generated/
+*.log
+
+# OS and Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

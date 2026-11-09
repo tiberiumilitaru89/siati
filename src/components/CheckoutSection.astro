@@ -1,0 +1,929 @@
+---
+import { formatBaniInCurrency, formatBaniToRon, type Product } from '../lib/catalog';
+
+export interface Props {
+  signatureProduct: Product;
+  bnrRateFormatted: string;
+}
+
+const { signatureProduct, bnrRateFormatted } = Astro.props;
+---
+
+<!-- SECȚIUNEA 3: Card Comandă Rapidă / Buchet Semnătură (Integrat Stripe FSM) -->
+<section id="comanda-rapida" class="quick-order-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Finalizare Comandă Securizată</span>
+      <h2>Comandă Rapidă cu Cardul</h2>
+      <p>
+        Finalizează comanda pentru buchetul ales în deplină siguranță prin Stripe (Apple Pay, Google Pay sau Card bancar). Livrare atentă în 2–3 ore oriunde în Prahova.
+      </p>
+    </div>
+
+    <div class="checkout-wrapper" id="checkout-card-anchor">
+      <div class="checkout-card">
+        <div class="checkout-card__header">
+          <span class="badge-pill" id="selected-product-badge">
+            {signatureProduct.badge ?? 'Colecția Semnătură'}
+          </span>
+          <div class="stock-indicator">
+            <span class="live-dot"></span>
+            <span>Disponibil azi în atelier</span>
+          </div>
+        </div>
+
+        <h3 id="selected-product-title">{signatureProduct.name}</h3>
+        <p class="checkout-card__desc" id="selected-product-desc">
+          {signatureProduct.description}
+        </p>
+
+        <!-- Comutator Monedă Plată Stripe (RON / EUR) cu Curs BNR Oficial -->
+        <div class="currency-bar" role="group" aria-label="Selectează moneda de plată">
+          <span class="currency-bar__label">Monedă plată card:</span>
+          <div class="currency-switcher">
+            <button
+              type="button"
+              class="currency-btn is-active"
+              data-currency="ron"
+              aria-pressed="true"
+            >
+              RON (Lei)
+            </button>
+            <button
+              type="button"
+              class="currency-btn"
+              data-currency="eur"
+              aria-pressed="false"
+            >
+              EUR (€ • Diaspora / Internațional)
+            </button>
+          </div>
+          <div class="bnr-rate-badge" id="bnr-rate-indicator">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>Curs oficial BNR: <strong>1 EUR = {bnrRateFormatted} RON</strong> (actualizat automat)</span>
+          </div>
+        </div>
+
+        <!-- Afișaj Dinamic Preț Total + Echivalent RON/EUR -->
+        <div class="price-container">
+          <div class="price-main-row">
+            <span class="price-label">Total de plată:</span>
+            <div class="price-tag" id="selected-product-price">
+              {formatBaniToRon(signatureProduct.price_bani)}
+            </div>
+            <span class="price-secondary" id="selected-product-price-secondary">
+              ({formatBaniInCurrency(signatureProduct.price_bani, 'eur')})
+            </span>
+          </div>
+          <p class="price-breakdown" id="price-breakdown-summary">
+            Aranjament floral ({formatBaniToRon(signatureProduct.price_bani)}) + Livrare Municipiul Ploiești (Gratuit)
+          </p>
+        </div>
+
+        <!-- Configurator Livrare Prahova & Program Carrefour Mall -->
+        <div class="delivery-config-grid">
+          <div class="field-group">
+            <label class="field-label" for="delivery-zone">
+              1. Destinația livrării în Județul Prahova (durată 2–3 ore):
+            </label>
+            <select id="delivery-zone" class="select-input">
+              <option value="ploiesti">
+                Municipiul Ploiești (~2 ore de la comandă • Gratuit)
+              </option>
+              <option value="limitrophe">
+                Blejoi / Păulești / Bucov / Strejnicu (~2 – 2,5 ore • Gratuit)
+              </option>
+              <option value="prahova_extins">
+                Restul Județului Prahova: Câmpina, Băicoi, Vălenii de Munte, Sinaia (~2,5 – 3 ore • +25 RON / +5 EUR)
+              </option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="delivery-slot">
+              2. Interval orar (Program Galeria Carrefour Mall 08:30–21:00 • Ultima comandă azi: 18:30):
+            </label>
+            <select id="delivery-slot" class="select-input">
+              <option value="standard_2_3h">
+                În 2–3 ore de la comandă (Standard Azi — până în ora 18:30)
+              </option>
+              <option value="morning_0830_1230">
+                Interval 08:30 – 12:30 (Dimineața)
+              </option>
+              <option value="afternoon_1230_1700">
+                Interval 12:30 – 17:00 (Prânz)
+              </option>
+              <option value="evening_1700_2100">
+                Interval 17:00 – 21:00 (Seara — până la închiderea Carrefour Mall)
+              </option>
+              <option value="next_day_0830_1230">
+                Mâine dimineață 08:30 – 12:30 (Pentru comenzi plasate după ora 18:30)
+              </option>
+            </select>
+            <p class="cutoff-notice" id="cutoff-live-notice">
+              ⏱️ Livrarea durează 2–3 ore în funcție de destinația din Prahova. Ultima comandă standard pentru livrare azi este la ora <strong>18:30</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Opțiuni Extra cu Cost Suplimentar (Plecare Imediată & În Afara Programului) -->
+        <div class="priority-addons">
+          <span class="priority-addons__title">Opțiuni Speciale & Urgențe (Extra):</span>
+
+          <label class="checkbox-container checkbox-container--priority" for="express-immediate">
+            <input type="checkbox" id="express-immediate" />
+            <span>
+              <strong>⚡ Plecare Imediată din Atelier (Dacă există pe stoc fizic)</strong> — Prioritate zero și plecare imediată spre destinație (~60–90 min)
+              <strong class="addon-badge" id="express-fee-badge">+30 RON (+6 EUR)</strong>
+            </span>
+          </label>
+
+          <label class="checkbox-container checkbox-container--vip" for="after-hours-vip">
+            <input type="checkbox" id="after-hours-vip" />
+            <span>
+              <strong>🌙 Livrare VIP în Afara Programului (După ora 18:30 / Nocturn)</strong> — Livrare garantată în aceeași seară după închiderea programului standard
+              <strong class="addon-badge addon-badge--vip" id="vip-fee-badge">+50 RON (+10 EUR)</strong>
+            </span>
+          </label>
+        </div>
+
+        <!-- ========================================================
+             Opțiuni Felicitare Cadou Gratuită & Livrare Surpriză
+             ======================================================== -->
+        <div class="gift-options-box">
+          <div class="gift-options-header">
+            <span class="gift-icon" aria-hidden="true">💌</span>
+            <div class="gift-header-text">
+              <strong>Felicitare Cadou Caligrafiată Manual</strong>
+              <span class="highlight-free-badge">Inclusă Gratuit</span>
+            </div>
+          </div>
+
+          <label class="checkbox-container checkbox-container--gift" for="include-greeting-card">
+            <input type="checkbox" id="include-greeting-card" checked />
+            <span>
+              <strong>Adaugă felicitare caligrafiată gratuită</strong> cu mesajul tău imprimat pe cartonaș elegant Siati
+            </span>
+          </label>
+
+          <div id="greeting-card-fields" class="greeting-card-fields">
+            <div class="field-group">
+              <div class="field-label-row">
+                <label for="greeting-message" class="field-label">Mesajul tău din suflet pe felicitare:</label>
+                <span id="char-counter" class="char-counter">0 / 300</span>
+              </div>
+              <textarea
+                id="greeting-message"
+                class="textarea-input"
+                maxlength="300"
+                rows="3"
+                placeholder="Scrie aici mesajul tău pe felicitare (ex: La mulți ani din suflet, mami! Te iubim mult!)..."
+                autocapitalize="sentences"
+                spellcheck="true"
+                enterkeyhint="next"
+              ></textarea>
+            </div>
+
+            <!-- Butoane Rapide de Inspirație -->
+            <div class="message-chips-row">
+              <span class="chips-label">Idei rapide:</span>
+              <button type="button" class="msg-chip" data-msg="La mulți ani cu sănătate, iubire și multe bucurii! 🎉">La mulți ani! 🎉</button>
+              <button type="button" class="msg-chip" data-msg="Te iubesc din tot sufletul meu! ❤️">Te iubesc! ❤️</button>
+              <button type="button" class="msg-chip" data-msg="O zi la fel de frumoasă și senină ca tine! ✨">O zi minunată! ✨</button>
+              <button type="button" class="msg-chip" data-msg="Îți mulțumesc din inimă pentru tot ce faci! 🌸">Mulțumesc! 🌸</button>
+            </div>
+
+            <label class="checkbox-container checkbox-container--anonymous" for="is-anonymous-gift">
+              <input type="checkbox" id="is-anonymous-gift" />
+              <span>
+                <strong>Livrare surpriză anonimă:</strong> curierul nu divulgă cine a trimis florile la predare (rămâne o surpriză până la deschiderea plicului)
+              </span>
+            </label>
+
+            <!-- Date Destinatar Opționale (Dacă florile sunt cadou pentru altcineva) -->
+            <div class="recipient-toggle-row">
+              <button type="button" id="toggle-recipient-btn" class="toggle-recipient-btn" aria-expanded="false">
+                <span id="toggle-recipient-label">+ Completează datele destinatarei (dacă florile sunt livrate cadou altcuiva)</span>
+              </button>
+            </div>
+
+            <div id="recipient-details-fields" class="recipient-details-fields" hidden>
+              <div class="fields-two-col">
+                <div class="field-group">
+                  <label for="recipient-name" class="field-label">Nume Destinatar (cine primește buchetul)</label>
+                  <input
+                    type="text"
+                    id="recipient-name"
+                    class="text-input"
+                    placeholder="Ex: Elena Popescu"
+                    autocomplete="name"
+                    autocapitalize="words"
+                    enterkeyhint="next"
+                  />
+                </div>
+                <div class="field-group">
+                  <label for="recipient-phone" class="field-label">Telefon Destinatar (pentru curier la ușă)</label>
+                  <input
+                    type="tel"
+                    id="recipient-phone"
+                    class="text-input"
+                    placeholder="Ex: 0722 000 000"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    enterkeyhint="done"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================
+             Date de Contact Cumpărător & Newsletter Recomandări
+             ======================================================== -->
+        <div class="customer-email-box">
+          <div class="field-group">
+            <div class="field-label-row">
+              <label for="customer-email" class="field-label">
+                Adresa ta de email (pentru confirmare comandă, factură & tracking):
+              </label>
+              <span class="required-indicator">* Obligatoriu</span>
+            </div>
+            <input
+              type="email"
+              id="customer-email"
+              class="text-input"
+              placeholder="exemplu@email.ro"
+              autocomplete="email"
+              inputmode="email"
+              autocapitalize="none"
+              spellcheck="false"
+              enterkeyhint="next"
+              required
+            />
+            <p class="field-hint">
+              Trimitem automat confirmarea plății Stripe și factura fiscală din SPV ANAF.
+            </p>
+          </div>
+
+          <label class="checkbox-container checkbox-container--newsletter" for="newsletter-optin">
+            <input type="checkbox" id="newsletter-optin" checked />
+            <span>
+              <strong>Recomandări & Oferta Săptămânii:</strong> Doresc să primesc pe email Oferta Săptămânii, reduceri exclusive și recomandări florale personalizate pentru aniversări (te poți dezabona oricând cu un clic).
+            </span>
+          </label>
+        </div>
+
+        <div class="options-group">
+          <label class="checkbox-container" for="require-photo">
+            <input type="checkbox" id="require-photo" checked />
+            <span>
+              Trimite-mi poza buchetului real pe WhatsApp înainte de livrare
+              <strong class="highlight-free">(Serviciu Gratuit)</strong>
+            </span>
+          </label>
+
+          <label class="checkbox-container checkbox-container--legal" for="perishable-consent">
+            <input type="checkbox" id="perishable-consent" required />
+            <span>
+              Confirm că florile naturale sunt produse perisabile exceptate de la dreptul de retragere conform <strong>OUG 34/2014 art. 16 lit. c)</strong>.
+            </span>
+          </label>
+        </div>
+
+        <div id="checkout-feedback" class="checkout-feedback" role="status" aria-live="polite" hidden></div>
+
+        <button
+          type="button"
+          id="checkout-btn"
+          class="btn-primary checkout-submit-btn"
+          data-product-id={signatureProduct.id}
+          data-product-price-bani={String(signatureProduct.price_bani)}
+        >
+          Comandă Acum (Apple Pay / Card RON & EUR)
+        </button>
+
+        <div class="checkout-badges">
+          <span>🔒 Plată 100% Criptată prin Stripe (RON & EUR)</span>
+          <span>🧾 Factură Emisă Automat (SPV ANAF)</span>
+          <span>🚗 Livratori Proprii Prahova (2–3h)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .quick-order-section {
+    position: relative;
+    padding: 5.5rem 0 4.5rem;
+    background: transparent;
+  }
+
+  .checkout-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .checkout-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 28px;
+    border: 1px solid rgba(197, 160, 89, 0.32);
+    box-shadow: 0 24px 60px -15px rgba(46, 34, 30, 0.10);
+    padding: 2.75rem;
+    color: var(--charcoal);
+  }
+
+  .checkout-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stock-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--success);
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+  }
+
+  .checkout-card h3 {
+    font-family: var(--font-serif);
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    color: var(--eucalyptus-dark);
+  }
+
+  .checkout-card__desc {
+    color: var(--text-muted);
+    font-size: 0.98rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .currency-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1.15rem;
+    background: var(--bg-cream);
+    border: 1px solid rgba(21, 50, 38, 0.1);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.35rem;
+  }
+
+  .currency-bar__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--eucalyptus-dark);
+  }
+
+  .currency-switcher {
+    display: inline-flex;
+    gap: 0.45rem;
+  }
+
+  .currency-btn {
+    background: #ffffff;
+    border: 1px solid rgba(21, 50, 38, 0.18);
+    color: var(--charcoal);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .currency-btn.is-active {
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+    font-weight: 700;
+    border-color: var(--eucalyptus-dark);
+    box-shadow: 0 4px 12px -2px rgba(21, 50, 38, 0.3);
+  }
+
+  .bnr-rate-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--eucalyptus-dark);
+    background: rgba(201, 166, 107, 0.16);
+    border: 1px solid rgba(201, 166, 107, 0.35);
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    margin-top: 0.35rem;
+    width: 100%;
+  }
+
+  .bnr-rate-badge strong {
+    color: var(--brand-red);
+  }
+
+  .price-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.35rem;
+    border-bottom: 1px solid rgba(21, 50, 38, 0.1);
+  }
+
+  .price-main-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.65rem;
+  }
+
+  .price-label {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  .price-tag {
+    font-size: 2.35rem;
+    font-weight: 700;
+    color: var(--brand-red);
+  }
+
+  .price-secondary {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--eucalyptus-dark);
+  }
+
+  .price-breakdown {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .delivery-config-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    margin-bottom: 1.45rem;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .field-label {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--eucalyptus-dark);
+  }
+
+  .select-input {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: var(--charcoal);
+    background-color: #ffffff;
+    border: 1px solid rgba(21, 50, 38, 0.2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .select-input:focus {
+    outline: none;
+    border-color: var(--eucalyptus-dark);
+    box-shadow: 0 0 0 3px rgba(21, 50, 38, 0.12);
+  }
+
+  .cutoff-notice {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0.2rem 0 0;
+    line-height: 1.45;
+  }
+
+  .cutoff-notice[data-after-cutoff='true'] {
+    color: #92400e;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .priority-addons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.35rem;
+    padding: 1.15rem;
+    background: var(--bg-cream);
+    border: 1px dashed rgba(201, 166, 107, 0.55);
+    border-radius: var(--radius-sm);
+  }
+
+  .priority-addons__title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--eucalyptus-dark);
+  }
+
+  .checkbox-container--priority,
+  .checkbox-container--vip {
+    background: #ffffff;
+    color: var(--charcoal);
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(21, 50, 38, 0.12);
+  }
+
+  .addon-badge {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    background: rgba(27, 109, 72, 0.12);
+    color: var(--eucalyptus-dark);
+  }
+
+  .addon-badge--vip {
+    background: rgba(142, 27, 45, 0.12);
+    color: var(--brand-red);
+  }
+
+  .gift-options-box {
+    margin-bottom: 1.5rem;
+    padding: 1.45rem;
+    background: var(--bg-cream);
+    border: 1.5px solid rgba(201, 166, 107, 0.4);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .gift-options-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .gift-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .gift-header-text {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .gift-header-text strong {
+    font-size: 1.05rem;
+    color: var(--eucalyptus-dark);
+  }
+
+  .highlight-free-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+    background: var(--success);
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+  }
+
+  .customer-email-box {
+    margin-bottom: 1.45rem;
+    padding: 1.35rem;
+    background: var(--bg-cream);
+    border: 1.5px solid rgba(21, 50, 38, 0.12);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .required-indicator {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--brand-red);
+    letter-spacing: 0.03em;
+  }
+
+  .field-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0 0;
+  }
+
+  .checkbox-container--newsletter {
+    background: #ffffff;
+    border: 1px solid rgba(21, 50, 38, 0.12);
+  }
+
+  .checkbox-container--gift {
+    background: #ffffff;
+    color: var(--charcoal);
+    border: 1px solid rgba(21, 50, 38, 0.12);
+  }
+
+  .greeting-card-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding-top: 0.4rem;
+  }
+
+  .field-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+  }
+
+  .char-counter {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .textarea-input {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: var(--charcoal);
+    background: #ffffff;
+    border: 1px solid rgba(21, 50, 38, 0.2);
+    border-radius: var(--radius-sm);
+    resize: vertical;
+    line-height: 1.5;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .textarea-input:focus {
+    outline: none;
+    border-color: var(--eucalyptus-dark);
+    box-shadow: 0 0 0 3px rgba(21, 50, 38, 0.12);
+  }
+
+  .message-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .chips-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-right: 0.2rem;
+  }
+
+  .msg-chip {
+    background: #ffffff;
+    border: 1px solid rgba(21, 50, 38, 0.16);
+    color: var(--charcoal);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .msg-chip:hover {
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+    border-color: var(--eucalyptus-dark);
+  }
+
+  .checkbox-container--anonymous {
+    background: var(--bg-muted);
+    border: 1px dashed rgba(21, 50, 38, 0.25);
+    color: var(--charcoal);
+  }
+
+  .toggle-recipient-btn {
+    background: none;
+    border: none;
+    color: var(--brand-red);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.4rem 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-align: left;
+  }
+
+  .recipient-details-fields {
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(21, 50, 38, 0.12);
+  }
+
+  .fields-two-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  @media (min-width: 600px) {
+    .fields-two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: var(--charcoal);
+    background: #ffffff;
+    border: 1px solid rgba(21, 50, 38, 0.2);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .text-input:focus {
+    outline: none;
+    border-color: var(--eucalyptus-dark);
+    box-shadow: 0 0 0 3px rgba(21, 50, 38, 0.12);
+  }
+
+  .options-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-cream);
+    border: 1px solid rgba(21, 50, 38, 0.12);
+    line-height: 1.45;
+  }
+
+  .checkbox-container input[type='checkbox'] {
+    margin-top: 0.2rem;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--eucalyptus-dark);
+    flex-shrink: 0;
+  }
+
+  .highlight-free {
+    color: var(--success);
+  }
+
+  .checkout-feedback {
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+  }
+
+  .checkout-feedback[data-state='error'] {
+    background: rgba(158, 42, 43, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(158, 42, 43, 0.3);
+  }
+
+  .checkout-feedback[data-state='info'] {
+    background: rgba(27, 109, 72, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(27, 109, 72, 0.3);
+  }
+
+  .checkout-submit-btn {
+    width: 100%;
+    font-size: 1.05rem;
+    padding: 1.15rem;
+  }
+
+  .checkout-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.9rem;
+    margin-top: 1.25rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .select-input,
+    .text-input,
+    .textarea-input,
+    input[type='text'],
+    input[type='tel'],
+    input[type='number'],
+    input[type='email'],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .checkout-card {
+      padding: 1.25rem 0.95rem !important;
+      border-radius: var(--radius-md) !important;
+    }
+
+    .checkout-card h3 {
+      font-size: 1.45rem;
+    }
+
+    .price-tag {
+      font-size: 1.95rem;
+    }
+
+    .currency-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.65rem;
+      padding: 0.75rem;
+    }
+
+    .currency-switcher {
+      display: flex;
+      width: 100%;
+    }
+
+    .currency-btn {
+      flex: 1;
+      text-align: center;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gift-options-box {
+      padding: 1rem 0.85rem;
+    }
+
+    .message-chips-row {
+      gap: 0.4rem;
+    }
+
+    .msg-chip {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.76rem;
+      padding: 0.35rem 0.7rem;
+    }
+
+    .checkout-submit-btn {
+      min-height: 52px;
+      font-size: 0.98rem;
+      padding: 0.95rem 0.75rem;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .price-tag {
+      font-size: 1.75rem;
+    }
+  }
+</style>

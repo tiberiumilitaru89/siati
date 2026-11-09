@@ -1,0 +1,182 @@
+---
+---
+
+<!-- Fundal Elegant cu Petale de Trandafir în Cădere Moale (Canvas 60fps / Zero Dependency) -->
+<div class="petals-canvas-container" aria-hidden="true">
+  <canvas id="petals-canvas" class="petals-canvas"></canvas>
+</div>
+
+<style>
+  .petals-canvas-container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .petals-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const canvas = document.getElementById('petals-canvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let cw = (canvas.width = window.innerWidth);
+    let ch = (canvas.height = window.innerHeight);
+
+    // Culorile petalelor: Bordeaux Regal (butoane #8e1b2d), Roz Pudrat Cald și Aur Champagne
+    const petalColors = [
+      'rgba(142, 27, 45, 0.42)',   // Bordeaux de Brand Siati (#8e1b2d)
+      'rgba(168, 40, 61, 0.34)',   // Carmin Catifelat
+      'rgba(214, 150, 160, 0.28)',  // Trandafir Pudrat Cald
+      'rgba(212, 175, 55, 0.26)',   // Sclipire Aur Champagne
+      'rgba(247, 237, 226, 0.40)',  // Fildeș Mătăsos
+    ];
+
+    class FallingPetal {
+      constructor(initialY) {
+        this.reset(initialY);
+      }
+
+      reset(initialY) {
+        this.x = Math.random() * cw;
+        this.y = initialY !== undefined ? initialY : -30;
+        this.size = Math.random() * 7 + 6; // Dimensiune petală (6px - 13px)
+        this.speedY = Math.random() * 0.75 + 0.35; // Cădere lentă, grațioasă
+        this.speedX = (Math.random() - 0.5) * 0.7;
+        this.color = petalColors[Math.floor(Math.random() * petalColors.length)];
+        this.angle = Math.random() * Math.PI * 2;
+        this.spin = (Math.random() - 0.5) * 0.025;
+        this.drift = Math.random() * 0.015 + 0.005;
+        this.oscillation = Math.random() * Math.PI * 2;
+        this.oscSpeed = Math.random() * 0.02 + 0.01;
+      }
+
+      update() {
+        this.oscillation += this.oscSpeed;
+        this.y += this.speedY;
+        this.x += this.speedX + Math.sin(this.oscillation) * 0.8;
+        this.angle += this.spin;
+
+        if (this.y > ch + 30 || this.x < -40 || this.x > cw + 40) {
+          this.reset(-25);
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = this.color;
+
+        // Desenare formă curbată organică de petală de trandafir (Bezier)
+        ctx.beginPath();
+        ctx.moveTo(0, -this.size);
+        ctx.bezierCurveTo(
+          this.size * 1.15,
+          -this.size * 0.5,
+          this.size * 1.05,
+          this.size * 0.85,
+          0,
+          this.size
+        );
+        ctx.bezierCurveTo(
+          -this.size * 1.05,
+          this.size * 0.85,
+          -this.size * 1.15,
+          -this.size * 0.5,
+          0,
+          -this.size
+        );
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Densitate rafinată: 26 petale pe desktop, 16 pe mobil pentru performanță maximă
+    const count = window.innerWidth < 768 ? 16 : 26;
+    const petals = [];
+    for (let i = 0; i < count; i++) {
+      petals.push(new FallingPetal(Math.random() * ch));
+    }
+
+    // WCAG 2.2 AA & Optimizare: Respect prefers-reduced-motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let animationFrameId = null;
+
+    function renderStatic() {
+      ctx.clearRect(0, 0, cw, ch);
+      for (let i = 0; i < Math.min(8, petals.length); i++) {
+        petals[i].draw();
+      }
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, cw, ch);
+      for (let i = 0; i < petals.length; i++) {
+        petals[i].update();
+        petals[i].draw();
+      }
+      animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function startLoop() {
+      if (!animationFrameId && !prefersReducedMotion && !document.hidden) {
+        animationFrameId = requestAnimationFrame(loop);
+      }
+    }
+
+    function stopLoop() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    if (prefersReducedMotion) {
+      renderStatic();
+    } else {
+      startLoop();
+    }
+
+    // Economisire baterie pe mobil: suspendare totală când ecranul/tab-ul nu este vizibil
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopLoop();
+      } else {
+        startLoop();
+      }
+    });
+
+    // Redimensionare fină cu debounce
+    let resizeTimer;
+    window.addEventListener(
+      'resize',
+      () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          cw = canvas.width = window.innerWidth;
+          ch = canvas.height = window.innerHeight;
+          if (prefersReducedMotion) renderStatic();
+        }, 150);
+      },
+      { passive: true }
+    );
+  })();
+</script>

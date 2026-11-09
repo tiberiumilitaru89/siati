@@ -1,0 +1,220 @@
+---
+---
+
+<!-- Modal Succes Comandă Post-Stripe -->
+<dialog id="order-success-dialog" class="order-success-dialog" aria-labelledby="success-dialog-title">
+  <div class="order-success-dialog__inner">
+    <div class="success-icon-wrap" aria-hidden="true">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#25d366" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <span class="step-pill">Plată Confirmată cu Succes • Florăria Siati</span>
+    <h2 id="success-dialog-title">Comanda ta a fost preluată!</h2>
+    <p class="success-dialog-desc">
+      Mulțumim din suflet! Aranjamentul tău floral intră în lucru la atelierele noastre din <strong>Galeria Carrefour Mall Ploiești</strong> și <strong>Blejoi DN1A</strong>.
+    </p>
+
+    <div class="success-steps-box">
+      <div class="success-step">
+        <span class="step-num">1</span>
+        <span>Florile sunt proaspăt hidratate și buchetul este creat cu grijă de florăreasa Siati.</span>
+      </div>
+      <div class="success-step">
+        <span class="step-num">2</span>
+        <span>Îți trimitem poza reală a buchetului pe WhatsApp înainte de plecarea livratorului.</span>
+      </div>
+      <div class="success-step">
+        <span class="step-num">3</span>
+        <span>Livrare atentă în 2–3 ore la adresa indicată din Județul Prahova.</span>
+      </div>
+    </div>
+
+    <div class="success-actions">
+      <a href="https://wa.me/40723852820?text=Bun%C4%83%20ziua!%20Am%20plasat%20o%20comand%C4%83%20pe%20Floraria-Siati.ro%20%C8%99i%20a%C8%99%20dori%20confirmarea%20acesteia." target="_blank" rel="noopener noreferrer" class="btn-whatsapp-success">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.58 1.942.88 2.791.88 3.18 0 5.767-2.587 5.767-5.766.001-3.181-2.585-5.766-5.767-5.766zm3.391 8.192c-.145.409-.848.781-1.183.829-.315.045-.71.07-2.072-.493-1.638-.677-2.695-2.348-2.776-2.457-.082-.109-.661-.88-.661-1.677 0-.797.416-1.189.564-1.352.148-.163.324-.204.433-.204.108 0 .217.001.312.006.1.005.234-.038.366.279.136.327.464 1.134.505 1.216.041.082.069.177.014.286-.054.109-.082.177-.163.272-.082.095-.172.213-.246.286-.082.082-.168.172-.072.336.095.163.424.7 1.037 1.246.791.704 1.458.922 1.666 1.025.209.103.33.09.453-.05.123-.14.526-.613.666-.823.14-.21.28-.175.472-.104.192.071 1.218.574 1.428.679.21.105.35.157.401.245.051.088.051.51-.094.919z"/></svg>
+        <span>Urmărește pe WhatsApp</span>
+      </a>
+      <button type="button" id="close-success-dialog-btn" class="btn-secondary-light">
+        Închide
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .order-success-dialog {
+    margin: auto;
+    max-width: 580px;
+    width: calc(100% - 2rem);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 0;
+    background: #faf7f2;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    z-index: 1000;
+    overscroll-behavior: contain;
+  }
+
+  .order-success-dialog::backdrop {
+    background: rgba(14, 28, 21, 0.82);
+    backdrop-filter: blur(8px);
+  }
+
+  .order-success-dialog__inner {
+    padding: 2.5rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .success-icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(37, 211, 102, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .step-pill {
+    display: inline-block;
+    background: rgba(27, 109, 72, 0.12);
+    color: var(--success);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+  }
+
+  .order-success-dialog h2 {
+    font-size: 1.85rem;
+    margin: 0.75rem 0 0.5rem;
+    color: var(--eucalyptus-dark);
+  }
+
+  .success-dialog-desc {
+    font-size: 0.96rem;
+    color: var(--charcoal);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .success-steps-box {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    text-align: left;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  .success-step {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.86rem;
+    color: var(--charcoal);
+    line-height: 1.4;
+  }
+
+  .step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.76rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .success-actions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.65rem;
+  }
+
+  .btn-whatsapp-success {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: #25d366;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.9rem 1.75rem;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
+    transition: all 0.2s ease;
+  }
+
+  .btn-whatsapp-success:hover {
+    background: #1eb956;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary-light {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1.5px solid var(--border-subtle);
+    color: var(--charcoal);
+    font-weight: 600;
+    font-size: 0.92rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary-light:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  @media (max-width: 640px) {
+    .order-success-dialog {
+      width: calc(100% - 1.5rem) !important;
+      max-height: 90vh;
+      max-height: 90dvh;
+      margin: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .order-success-dialog__inner {
+      padding: 1.75rem 1rem !important;
+    }
+
+    .order-success-dialog h2 {
+      font-size: 1.45rem !important;
+    }
+
+    .success-actions {
+      flex-direction: column;
+      width: 100%;
+      gap: 0.65rem;
+    }
+
+    .btn-whatsapp-success,
+    .btn-secondary-light {
+      width: 100%;
+      min-height: 48px;
+      justify-content: center;
+    }
+  }
+</style>

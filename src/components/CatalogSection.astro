@@ -1,0 +1,399 @@
+---
+import { formatBaniToRon, type Product, type ProductCategory } from '../lib/catalog';
+
+export interface Props {
+  products: readonly Product[];
+  categories: ReadonlyArray<{ readonly id: 'all' | ProductCategory; readonly label: string }>;
+}
+
+const { products, categories } = Astro.props;
+---
+
+<!-- SECȚIUNEA 2: Catalog Complet de Lux (Atelier Parizian Editorial) -->
+<section id="colectii" class="catalog-section" aria-label="Colecțiile Florăria Siati">
+  <div class="container">
+    <div class="section-header">
+      <span class="eyebrow">Atelier Floral Artizanal • Prahova</span>
+      <h2>Colecțiile Florăria Siati</h2>
+      <p>
+        Buchete și aranjamente lucrate manual din flori proaspete hidratate zilnic. Alege buchetul dorit pentru comandă securizată cu cardul sau discută personalizarea direct pe WhatsApp.
+      </p>
+    </div>
+
+    <!-- Filtre Colecții -->
+    <div class="category-tabs" role="tablist" aria-label="Filtrează după colecție">
+      {
+        categories.map((cat, idx) => (
+          <button
+            type="button"
+            role="tab"
+            class:list={['category-tab', { 'is-active': idx === 0 }]}
+            aria-selected={idx === 0 ? 'true' : 'false'}
+            data-category={cat.id}
+          >
+            {cat.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <!-- Grilă de Produse de Lux (Carduri Înalte Editorial) -->
+    <div class="catalog-grid" id="catalog-grid">
+      {
+        products.map((product) => (
+          <article class="product-card" data-category={product.category}>
+            <div class="product-card__media">
+              <img
+                src={product.image_url}
+                alt={product.name}
+                width="600"
+                height="750"
+                loading="lazy"
+                decoding="async"
+              />
+              {product.badge && <span class="product-card__badge">{product.badge}</span>}
+              <span class="product-card__delivery-hint">Livrare 2–3h în Prahova</span>
+            </div>
+
+            <div class="product-card__body">
+              <div class="product-card__meta">
+                <span class="product-card__category">{product.category.toUpperCase()}</span>
+                <strong class="product-card__price">
+                  {formatBaniToRon(product.price_bani)}
+                </strong>
+              </div>
+
+              <h3 class="product-card__title">{product.name}</h3>
+              <p class="product-card__desc">{product.description}</p>
+
+              <div class="product-card__actions">
+                <button
+                  type="button"
+                  class="btn-primary btn-sm select-for-checkout-btn"
+                  data-id={product.id}
+                  data-name={product.name}
+                  data-desc={product.description}
+                  data-badge={product.badge ?? 'Colecția Siati'}
+                  data-price-formatted={formatBaniToRon(product.price_bani)}
+                  data-price-bani={String(product.price_bani)}
+                  data-image={product.image_url}
+                  aria-label={`Comandă online cu cardul ${product.name}`}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  <span>Comandă Online</span>
+                </button>
+
+                <a
+                  href={`https://wa.me/40723852820?text=${encodeURIComponent(`Bună ziua! Doresc să comand aranjamentul „${product.name}” (${formatBaniToRon(product.price_bani)}) de la Florăria Siati.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-secondary btn-sm"
+                  aria-label={`Comandă pe WhatsApp ${product.name}`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.58 1.942.88 2.791.88 3.18 0 5.767-2.587 5.767-5.766.001-3.181-2.585-5.766-5.767-5.766zm3.391 8.192c-.145.409-.848.781-1.183.829-.315.045-.71.07-2.072-.493-1.638-.677-2.695-2.348-2.776-2.457-.082-.109-.661-.88-.661-1.677 0-.797.416-1.189.564-1.352.148-.163.324-.204.433-.204.108 0 .217.001.312.006.1.005.234-.038.366.279.136.327.464 1.134.505 1.216.041.082.069.177.014.286-.054.109-.082.177-.163.272-.082.095-.172.213-.246.286-.082.082-.168.172-.072.336.095.163.424.7 1.037 1.246.791.704 1.458.922 1.666 1.025.209.103.33.09.453-.05.123-.14.526-.613.666-.823.14-.21.28-.175.472-.104.192.071 1.218.574 1.428.679.21.105.35.157.401.245.051.088.051.51-.094.919z"/></svg>
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .catalog-section {
+    position: relative;
+    padding: 5.5rem 0 4rem;
+    background: transparent;
+  }
+
+  .category-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-bottom: 3.25rem;
+  }
+
+  .category-tab {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--charcoal);
+    border: 1px solid rgba(197, 160, 89, 0.28);
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 14px -4px rgba(46, 34, 30, 0.06);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .category-tab:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--gold-accent);
+    color: var(--eucalyptus-dark);
+    transform: translateY(-1px);
+  }
+
+  .category-tab.is-active {
+    background: var(--eucalyptus-dark);
+    color: #ffffff;
+    border-color: var(--eucalyptus-dark);
+    box-shadow: 0 8px 20px -6px rgba(27, 59, 43, 0.35);
+  }
+
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2.25rem;
+  }
+
+  .product-card {
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 24px;
+    border: 1px solid rgba(197, 160, 89, 0.30);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 36px -12px rgba(46, 34, 30, 0.08);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.3s ease,
+                background-color 0.3s ease;
+  }
+
+  .product-card:hover {
+    background: rgba(255, 255, 255, 0.94);
+    transform: translateY(-5px);
+    border-color: rgba(197, 160, 89, 0.52);
+    box-shadow: 0 24px 50px -16px rgba(142, 27, 45, 0.14);
+  }
+
+  .product-card[hidden] {
+    display: none;
+  }
+
+  .product-card__media {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--bg-muted);
+  }
+
+  .product-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .product-card:hover .product-card__media img {
+    transform: scale(1.05);
+  }
+
+  .product-card__badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    color: var(--brand-red);
+    border: 1px solid rgba(142, 27, 45, 0.16);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .product-card__delivery-hint {
+    position: absolute;
+    bottom: 0.85rem;
+    left: 1rem;
+    background: rgba(21, 50, 38, 0.88);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+  }
+
+  .product-card__body {
+    padding: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .product-card__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+
+  .product-card__category {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--brand-red);
+  }
+
+  .product-card__price {
+    font-family: var(--font-sans);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--eucalyptus-dark);
+  }
+
+  .product-card__title {
+    font-family: var(--font-serif);
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: var(--eucalyptus-dark);
+    line-height: 1.25;
+    margin-bottom: 0.65rem;
+  }
+
+  .product-card__desc {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex: 1;
+  }
+
+  .product-card__actions {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .product-card__actions button,
+  .product-card__actions a {
+    min-height: 44px;
+    padding: 0.65rem 0.95rem;
+    font-size: 0.86rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+  }
+
+  @media (max-width: 768px) {
+    .catalog-section {
+      padding: 3rem 0 2rem;
+    }
+
+    .category-tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      justify-content: flex-start;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem 0.75rem;
+      margin: 0 -1.5rem 1.5rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .category-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-tab {
+      flex-shrink: 0;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.84rem;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .catalog-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+    }
+
+    .product-card {
+      border-radius: 16px;
+    }
+
+    .product-card__media {
+      aspect-ratio: 1 / 1;
+    }
+
+    .product-card__badge {
+      top: 0.5rem;
+      left: 0.5rem;
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    .product-card__delivery-hint {
+      display: none;
+    }
+
+    .product-card__body {
+      padding: 0.75rem;
+      gap: 0.35rem;
+    }
+
+    .product-card__meta {
+      margin-bottom: 0.15rem;
+    }
+
+    .product-card__category {
+      font-size: 0.62rem;
+    }
+
+    .product-card__price {
+      font-size: 0.95rem;
+    }
+
+    .product-card__title {
+      font-size: 0.9rem;
+      line-height: 1.25;
+      margin-bottom: 0.25rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.25em;
+    }
+
+    .product-card__desc {
+      display: none;
+    }
+
+    .product-card__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+    }
+
+    .product-card__actions button,
+    .product-card__actions a {
+      width: 100%;
+      min-height: 42px;
+      padding: 0.5rem 0.6rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .product-card__actions a {
+      display: none; /* Keep the mobile 2-col clean; the primary action is Alege/Comanda, and WA is available in hero/floating button! */
+    }
+  }
+</style>
