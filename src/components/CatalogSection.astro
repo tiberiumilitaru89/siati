@@ -42,7 +42,7 @@ const { products, categories } = Astro.props;
       {
         products.map((product) => (
           <article class="product-card" data-category={product.category}>
-            <div class="product-card__media">
+            <a href={`/produs/${product.slug}`} class="product-card__media" aria-label={`Vezi detalii și comandă ${product.name}`}>
               <img
                 src={product.image_url}
                 alt={product.name}
@@ -53,7 +53,7 @@ const { products, categories } = Astro.props;
               />
               {product.badge && <span class="product-card__badge">{product.badge}</span>}
               <span class="product-card__delivery-hint">Livrare 2–3h în Prahova</span>
-            </div>
+            </a>
 
             <div class="product-card__body">
               <div class="product-card__meta">
@@ -63,25 +63,20 @@ const { products, categories } = Astro.props;
                 </strong>
               </div>
 
-              <h3 class="product-card__title">{product.name}</h3>
+              <h3 class="product-card__title">
+                <a href={`/produs/${product.slug}`}>{product.name}</a>
+              </h3>
               <p class="product-card__desc">{product.description}</p>
 
               <div class="product-card__actions">
-                <button
-                  type="button"
-                  class="btn-primary btn-sm select-for-checkout-btn"
-                  data-id={product.id}
-                  data-name={product.name}
-                  data-desc={product.description}
-                  data-badge={product.badge ?? 'Colecția Siati'}
-                  data-price-formatted={formatBaniToRon(product.price_bani)}
-                  data-price-bani={String(product.price_bani)}
-                  data-image={product.image_url}
-                  aria-label={`Comandă online cu cardul ${product.name}`}
+                <a
+                  href={`/produs/${product.slug}`}
+                  class="btn-primary btn-sm product-card__order-btn"
+                  aria-label={`Comandă ${product.name}`}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  <span>Comandă Online</span>
-                </button>
+                  <span>Comandă</span>
+                </a>
 
                 <a
                   href={`https://wa.me/40723852820?text=${encodeURIComponent(`Bună ziua! Doresc să comand aranjamentul „${product.name}” (${formatBaniToRon(product.price_bani)}) de la Florăria Siati.`)}`}
@@ -383,8 +378,8 @@ const { products, categories } = Astro.props;
       margin-top: 0.35rem;
     }
 
-    .product-card__actions button,
-    .product-card__actions a {
+    .product-card__actions .product-card__order-btn {
+      display: inline-flex !important;
       width: 100%;
       min-height: 42px;
       padding: 0.5rem 0.6rem;
@@ -392,8 +387,8 @@ const { products, categories } = Astro.props;
       font-weight: 600;
     }
 
-    .product-card__actions a {
-      display: none; /* Keep the mobile 2-col clean; the primary action is Alege/Comanda, and WA is available in hero/floating button! */
+    .product-card__actions .btn-secondary {
+      display: none; /* Keep the mobile 2-col clean; the primary action is Comanda, and WA is available in hero/floating button! */
     }
   }
 </style>

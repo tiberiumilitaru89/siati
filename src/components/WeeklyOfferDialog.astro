@@ -41,20 +41,13 @@ const { weeklyOffer, signatureProduct } = Astro.props;
           <div class="offer-dialog__price">{formatBaniToRon(weeklyOffer.price_bani)}</div>
 
           <div class="offer-dialog__actions">
-            <button
-              type="button"
+            <a
+              href="/produs/orhidee-phalaenopsis-in-cutie-neagra"
               id="claim-weekly-offer-btn"
-              class="btn-primary select-for-checkout-btn"
-              data-id={weeklyOffer.product_id ?? signatureProduct.id}
-              data-name={weeklyOffer.title}
-              data-desc={weeklyOffer.description}
-              data-badge="Oferta Săptămânii"
-              data-price-formatted={formatBaniToRon(weeklyOffer.price_bani)}
-              data-price-bani={String(weeklyOffer.price_bani)}
-              data-image={weeklyOffer.image_url}
+              class="btn-primary"
             >
-              Rezervă Oferta Acum
-            </button>
+              Comandă Oferta Acum
+            </a>
           </div>
         </div>
       </div>

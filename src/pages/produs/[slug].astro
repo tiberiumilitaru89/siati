@@ -1,0 +1,363 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import ParallaxBackground from '../../components/ParallaxBackground.astro';
+import PetalsCanvas from '../../components/PetalsCanvas.astro';
+import CheckoutSection from '../../components/CheckoutSection.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import OrderSuccessDialog from '../../components/OrderSuccessDialog.astro';
+import { getLiveBnrEurRate } from '../../lib/bnr';
+import { formatBaniInCurrency, formatBaniToRon } from '../../lib/catalog';
+import { findProductBySlugServerSide } from '../../lib/supabase';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+if (!slug) {
+  return Astro.redirect('/#colectii');
+}
+
+const [bnrInfo, product] = await Promise.all([
+  getLiveBnrEurRate(),
+  findProductBySlugServerSide(slug),
+]);
+
+if (!product) {
+  return Astro.redirect('/#colectii');
+}
+---
+
+<Layout
+  title={`${product.name} — Comandă Online | Florăria Siati Ploiești`}
+  description={`${product.description.slice(0, 155)}... Livrare atentă în 2–3 ore în Ploiești & Prahova cu poză reală pe WhatsApp.`}
+>
+  <SiteHeader />
+  <ParallaxBackground />
+  <PetalsCanvas />
+
+  <main id="main-content" class="product-page-main">
+    <div class="container product-page-container">
+      <!-- Navigare Înapoi la Colecții -->
+      <nav class="product-breadcrumb" aria-label="Navigare breadcrumb">
+        <a href="/#colectii" class="breadcrumb-back-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>Înapoi la Toate Colecțiile</span>
+        </a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-category">{product.category.toUpperCase()}</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current" aria-current="page">{product.name}</span>
+      </nav>
+
+      <div class="product-detail-layout">
+        <!-- Coloana Stângă: Prezentare Produs Artizanal -->
+        <div class="product-showcase">
+          <div class="product-showcase__media">
+            <img
+              src={product.image_url}
+              alt={product.name}
+              width="800"
+              height="1000"
+              class="product-showcase__img"
+              fetchpriority="high"
+              decoding="async"
+            />
+            {product.badge && <span class="product-showcase__badge">{product.badge}</span>}
+            <span class="product-showcase__delivery-tag">Livrare atentă 2–3h în Prahova</span>
+          </div>
+
+          <div class="product-showcase__info">
+            <div class="product-showcase__meta-row">
+              <span class="product-showcase__category">{product.category.toUpperCase()}</span>
+              <div class="product-showcase__price-group">
+                <strong class="product-showcase__price">{formatBaniToRon(product.price_bani)}</strong>
+                <span class="product-showcase__price-eur">({formatBaniInCurrency(product.price_bani, 'eur')})</span>
+              </div>
+            </div>
+
+            <h1 class="product-showcase__title">{product.name}</h1>
+            <p class="product-showcase__desc">{product.description}</p>
+
+            <!-- Carduri Garanții Atelier Siati -->
+            <div class="product-guarantees">
+              <div class="guarantee-card">
+                <span class="guarantee-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                <div>
+                  <strong>Poză reală pe WhatsApp</strong>
+                  <p>Îți trimitem poza buchetului înainte să plece livratorul spre destinatar.</p>
+                </div>
+              </div>
+
+              <div class="guarantee-card">
+                <span class="guarantee-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </span>
+                <div>
+                  <strong>Livrare rapidă 2–3 ore</strong>
+                  <p>Flotă proprie în Ploiești, Blejoi, Păulești, Bucov și Valea Prahovei.</p>
+                </div>
+              </div>
+
+              <div class="guarantee-card">
+                <span class="guarantee-icon" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                </span>
+                <div>
+                  <strong>Flori Olandeze Proaspete</strong>
+                  <p>Flori de licitație Hilverda De Boer hidratate zilnic la 4°C în atelierele noastre.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coloana Dreaptă: Formular de Opțiuni Livrare & Plată Securizată -->
+        <div class="product-checkout-panel">
+          <CheckoutSection signatureProduct={product} bnrRateFormatted={bnrInfo.formatted} isStandalone={true} />
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <SiteFooter />
+  <OrderSuccessDialog />
+
+  <script src="../../scripts/checkout.js"></script>
+
+  <style>
+    .product-page-main {
+      position: relative;
+      z-index: 1;
+      padding: 6.5rem 0 5rem;
+      min-height: 80vh;
+      background: transparent;
+    }
+
+    .product-page-container {
+      max-width: 1260px;
+    }
+
+    /* Breadcrumb Nav */
+    .product-breadcrumb {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 2.25rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .breadcrumb-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--eucalyptus-dark);
+      font-weight: 700;
+      padding: 0.4rem 0.85rem;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      border-radius: 999px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .breadcrumb-back-link:hover {
+      background: var(--eucalyptus-dark);
+      color: #ffffff;
+      transform: translateX(-2px);
+    }
+
+    .breadcrumb-sep {
+      color: var(--gold-accent);
+      opacity: 0.6;
+    }
+
+    .breadcrumb-category {
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--brand-red);
+      font-size: 0.78rem;
+    }
+
+    .breadcrumb-current {
+      color: var(--charcoal);
+      font-weight: 600;
+    }
+
+    /* Layout 2 Coloane */
+    .product-detail-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 3.5rem;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 992px) {
+      .product-detail-layout {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+    }
+
+    /* Prezentare Produs Stânga */
+    .product-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .product-showcase__media {
+      position: relative;
+      border-radius: 28px;
+      overflow: hidden;
+      aspect-ratio: 4 / 5;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(197, 160, 89, 0.32);
+      box-shadow: 0 20px 48px -16px rgba(46, 34, 30, 0.12);
+    }
+
+    .product-showcase__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .product-showcase__media:hover .product-showcase__img {
+      transform: scale(1.03);
+    }
+
+    .product-showcase__badge {
+      position: absolute;
+      top: 1.25rem;
+      left: 1.25rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      color: var(--brand-red);
+      border: 1px solid rgba(142, 27, 45, 0.18);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .product-showcase__delivery-tag {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 1.25rem;
+      background: rgba(21, 50, 38, 0.92);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+    }
+
+    .product-showcase__meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .product-showcase__category {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--brand-red);
+    }
+
+    .product-showcase__price-group {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .product-showcase__price {
+      font-family: var(--font-sans);
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--eucalyptus-dark);
+    }
+
+    .product-showcase__price-eur {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .product-showcase__title {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 3.2vw, 2.6rem);
+      line-height: 1.2;
+      color: var(--eucalyptus-dark);
+      margin-bottom: 1.1rem;
+    }
+
+    .product-showcase__desc {
+      font-size: 1.02rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Garanții */
+    .product-guarantees {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .guarantee-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.9rem 1.1rem;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(197, 160, 89, 0.28);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .guarantee-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(27, 59, 43, 0.08);
+      color: var(--eucalyptus-dark);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .guarantee-card strong {
+      display: block;
+      font-size: 0.94rem;
+      color: var(--eucalyptus-dark);
+      margin-bottom: 0.2rem;
+    }
+
+    .guarantee-card p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Panoul de Checkout Dreapta */
+    .product-checkout-panel {
+      position: sticky;
+      top: 6rem;
+    }
+  </style>
+</Layout>

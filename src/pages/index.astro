@@ -7,7 +7,6 @@ import HeroSection from '../components/HeroSection.astro';
 import CatalogSection from '../components/CatalogSection.astro';
 import WeeklyOfferSection from '../components/WeeklyOfferSection.astro';
 import BudgetSection from '../components/BudgetSection.astro';
-import CheckoutSection from '../components/CheckoutSection.astro';
 import FloralSchoolSection from '../components/FloralSchoolSection.astro';
 import LocationsSection from '../components/LocationsSection.astro';
 import ReviewsSection from '../components/ReviewsSection.astro';
@@ -56,7 +55,6 @@ const categories: ReadonlyArray<{ readonly id: 'all' | ProductCategory; readonly
     <CatalogSection products={products} categories={categories} />
     {weeklyOffer && <WeeklyOfferSection weeklyOffer={weeklyOffer} signatureProductId={signatureProduct.id} />}
     <BudgetSection />
-    <CheckoutSection signatureProduct={signatureProduct} bnrRateFormatted={bnrInfo.formatted} />
     <FloralSchoolSection />
     <LocationsSection />
     <ReviewsSection />

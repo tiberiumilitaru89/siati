@@ -4,21 +4,26 @@ import { formatBaniInCurrency, formatBaniToRon, type Product } from '../lib/cata
 export interface Props {
   signatureProduct: Product;
   bnrRateFormatted: string;
+  isStandalone?: boolean;
 }
 
-const { signatureProduct, bnrRateFormatted } = Astro.props;
+const { signatureProduct, bnrRateFormatted, isStandalone = false } = Astro.props;
 ---
 
 <!-- SECȚIUNEA 3: Card Comandă Rapidă / Buchet Semnătură (Integrat Stripe FSM) -->
-<section id="comanda-rapida" class="quick-order-section">
-  <div class="container">
-    <div class="section-header">
-      <span class="eyebrow">Finalizare Comandă Securizată</span>
-      <h2>Comandă Rapidă cu Cardul</h2>
-      <p>
-        Finalizează comanda pentru buchetul ales în deplină siguranță prin Stripe (Apple Pay, Google Pay sau Card bancar). Livrare atentă în 2–3 ore oriunde în Prahova.
-      </p>
-    </div>
+<section id="comanda-rapida" class:list={["quick-order-section", { "quick-order-section--standalone": isStandalone }]}>
+  <div class:list={[{ "container": !isStandalone }]}>
+    {
+      !isStandalone && (
+        <div class="section-header">
+          <span class="eyebrow">Finalizare Comandă Securizată</span>
+          <h2>Comandă Rapidă cu Cardul</h2>
+          <p>
+            Finalizează comanda pentru buchetul ales în deplină siguranță prin Stripe (Apple Pay, Google Pay sau Card bancar). Livrare atentă în 2–3 ore oriunde în Prahova.
+          </p>
+        </div>
+      )
+    }
 
     <div class="checkout-wrapper" id="checkout-card-anchor">
       <div class="checkout-card">

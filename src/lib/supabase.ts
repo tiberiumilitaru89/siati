@@ -181,6 +181,27 @@ export async function findProductByIdServerSide(productId: string): Promise<Prod
   return localStore.products.find((p) => p.id === productId) ?? null;
 }
 
+export async function findProductBySlugServerSide(slug: string): Promise<Product | null> {
+  const client = createAdminSupabaseClient() ?? createPublicSupabaseClient();
+  if (client) {
+    const { data, error } = await client
+      .from('products')
+      .select('id, name, slug, description, price_bani, category, badge, image_url, in_stock')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (!error && data) {
+      return data as Product;
+    }
+  }
+  const localStore = await readLocalCatalogStore();
+  return (
+    localStore.products.find((p) => p.slug === slug) ??
+    FALLBACK_PRODUCTS.find((p) => p.slug === slug) ??
+    null
+  );
+}
+
 /**
  * Citește registrul local de comenzi și facturi SPV din data/orders-ledger.json.
  */
