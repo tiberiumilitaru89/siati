@@ -94,4 +94,24 @@
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
   }
+
+  /* Pe mobil: reutilizează imaginea compactă hero și întărește voalul crem-ivoire
+     ca textul Hero centrat (verde închis & auriu) să rămână foarte clar */
+  @media (max-width: 767px) {
+    .parallax-bg-image {
+      background-image: url('/images/tulip_hero-mobile.webp');
+      background-position: center 28%;
+    }
+
+    .parallax-bg-overlay {
+      background: radial-gradient(
+        ellipse at 50% 30%,
+        rgba(251, 248, 243, 0.78) 0%,
+        rgba(251, 248, 243, 0.86) 55%,
+        rgba(251, 248, 243, 0.95) 100%
+      );
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+  }
 </style>
