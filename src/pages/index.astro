@@ -14,7 +14,6 @@ import WeeklyOfferDialog from '../components/WeeklyOfferDialog.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import OrderSuccessDialog from '../components/OrderSuccessDialog.astro';
 
-import { getLiveBnrEurRate } from '../lib/bnr';
 import {
   DEFAULT_SIGNATURE_PRODUCT,
   type ProductCategory,
@@ -24,8 +23,9 @@ import { fetchActiveProducts, fetchActiveWeeklyOffer } from '../lib/supabase';
 export const prerender = false;
 
 // Sursele sunt independente: le rulăm în paralel (înainte se așteptau pe rând și TTFB urca până la ~2,4 s).
-const [bnrInfo, products, weeklyOffer] = await Promise.all([
-  getLiveBnrEurRate(),
+// Cursul BNR nu mai este necesar aici: checkout-ul s-a mutat pe /produs/[slug], deci prima pagină nu mai
+// blochează randarea pe un apel extern către BNR.
+const [products, weeklyOffer] = await Promise.all([
   fetchActiveProducts(),
   fetchActiveWeeklyOffer(),
 ]);

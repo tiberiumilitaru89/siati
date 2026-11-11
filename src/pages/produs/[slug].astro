@@ -31,7 +31,7 @@ if (!product) {
   title={`${product.name} — Comandă Online | Florăria Siati Ploiești`}
   description={`${product.description.slice(0, 155)}... Livrare atentă în 2–3 ore în Ploiești & Prahova cu poză reală pe WhatsApp.`}
 >
-  <SiteHeader />
+  <SiteHeader orderHref="#comanda-rapida" />
   <ParallaxBackground />
   <PetalsCanvas />
 
@@ -115,7 +115,7 @@ if (!product) {
 
         <!-- Coloana Dreaptă: Formular de Opțiuni Livrare & Plată Securizată -->
         <div class="product-checkout-panel">
-          <CheckoutSection signatureProduct={product} bnrRateFormatted={bnrInfo.formatted} isStandalone={true} />
+          <CheckoutSection signatureProduct={product} bnrRateFormatted={bnrInfo.rateFormatted} isStandalone={true} />
         </div>
       </div>
     </div>

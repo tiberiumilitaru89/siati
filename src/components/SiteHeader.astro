@@ -3,14 +3,19 @@ import type { WeeklyOffer } from '../lib/supabase';
 
 export interface Props {
   weeklyOffer?: WeeklyOffer | null;
+  /**
+   * Destinația linkului „Comandă Online”. Pe prima pagină checkout-ul nu mai există (comenzile se fac pe
+   * /produs/[slug]), deci linkul duce la colecții; paginile de produs îl trimit la propriul checkout.
+   */
+  orderHref?: string;
 }
 
-const { weeklyOffer } = Astro.props;
+const { weeklyOffer, orderHref = '/#colectii' } = Astro.props;
 ---
 
 <header class="site-header">
   <div class="container header-inner">
-    <a href="#scrolly-hero" class="brand-logo" aria-label="Florăria Siati - Pagina principală">
+    <a href="/#scrolly-hero" class="brand-logo" aria-label="Florăria Siati - Pagina principală">
       <span class="brand-logo__emblem" aria-hidden="true">
         <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
           <path d="M20 5C13 11 9 17 11 25C12.5 31 18 35 20 35C20 35 17 28 18 20C18.8 13.5 20 5 20 5Z" fill="#8e1b2d" />
@@ -27,13 +32,13 @@ const { weeklyOffer } = Astro.props;
     </a>
 
     <nav class="main-nav" aria-label="Navigare principală">
-      <a href="#colectii">Colecții Florale</a>
-      {weeklyOffer && <a href="#oferta-saptamanii">Oferta Săptămânii</a>}
-      <a href="#buget-whatsapp">Comandă pe Buget</a>
-      <a href="#comanda-rapida">Comandă Online</a>
-      <a href="#scoala-de-flori">Școala de Flori</a>
-      <a href="#locatii">Locații & Program</a>
-      <a href="#recenzii">Recenzii</a>
+      <a href="/#colectii">Colecții Florale</a>
+      {weeklyOffer && <a href="/#oferta-saptamanii">Oferta Săptămânii</a>}
+      <a href="/#buget-whatsapp">Comandă pe Buget</a>
+      <a href={orderHref}>Comandă Online</a>
+      <a href="/#scoala-de-flori">Școala de Flori</a>
+      <a href="/#locatii">Locații & Program</a>
+      <a href="/#recenzii">Recenzii</a>
     </nav>
 
     <div class="header-cta">
